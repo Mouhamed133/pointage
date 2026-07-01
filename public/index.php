@@ -7,7 +7,6 @@ session_start();
 $route = $_GET['route'] ?? 'login';
 $route = preg_replace('/[^a-zA-Z0-9_\-\/]/', '', $route);
 
-// 'scan' est public : l'etudiant non connecte peut arriver ici depuis le QR mural
 $pagesPubliques = ['login', 'logout', 'register', 'forgot', 'reset', 'activer', 'scan'];
 
 if (!isset($_SESSION['user']) && !in_array($route, $pagesPubliques)) {
@@ -65,14 +64,7 @@ switch ($route) {
         break;
 
     // ============================================
-    // QR CODE MURAL — NOUVEAU FLUX
-    //
-    // route=scan         (public) : recoit le scan depuis le QR mural,
-    //                               memorise le token, redirige vers login
-    //                               ou pointe directement si deja connecte.
-    //
-    // route=scan/pointer (prive)  : appele apres login reussi pour effectuer
-    //                               le pointage et rediriger au dashboard.
+    // QR CODE MURAL
     // ============================================
     case 'scan':
         require_once __DIR__ . '/../app/Controllers/SchoolQrController.php';
@@ -105,6 +97,19 @@ switch ($route) {
     case 'etudiant/qr/regenerer':
         require_once __DIR__ . '/../app/Controllers/EtudiantController.php';
         (new EtudiantController())->regenererQR();
+        break;
+
+    // ============================================
+    // PROFIL ETUDIANT — NOUVELLES ROUTES
+    // ============================================
+    case 'etudiant/profil/photo':
+        require_once __DIR__ . '/../app/Controllers/EtudiantController.php';
+        (new EtudiantController())->uploadPhoto();
+        break;
+
+    case 'etudiant/profil/password':
+        require_once __DIR__ . '/../app/Controllers/EtudiantController.php';
+        (new EtudiantController())->changerPassword();
         break;
 
     // ============================================

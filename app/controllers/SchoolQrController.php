@@ -17,8 +17,6 @@ class SchoolQrController
 
     // ============================================
     // GET OR CREATE — retourne le QR actif
-    // Encode maintenant une URL cliquable (pas juste un token)
-    // pour que le scanner natif du telephone ouvre directement l'app.
     // ============================================
     public function getOrCreate(): void
     {
@@ -32,7 +30,6 @@ class SchoolQrController
             $qr = ['token' => $token, 'label' => 'Entree principale', 'latitude' => 14.6796200, 'longitude' => -17.4412290, 'rayon' => 500];
         }
 
-        // On ajoute l'URL a encoder dans le QR Code (a la place du token brut)
         $qr['url'] = $this->urlBase() . '/index.php?route=scan&token=' . urlencode($qr['token']);
 
         header('Content-Type: application/json');
@@ -41,16 +38,7 @@ class SchoolQrController
     }
 
     // ============================================
-    // SCAN REDIRECT — point d'entree apres scan du QR mural
-    //
-    // Parcours complet :
-    //   1. Etudiant scanne le QR avec la camera native du tel
-    //   2. Le tel reconnait une URL → propose "Ouvrir dans navigateur"
-    //   3. Cette methode recoit le token, le met en session
-    //   4. Si deja connecte  → pointage immediat + redirection dashboard
-    //   5. Si non connecte   → redirection login (token reste en session)
-    //   6. Apres login reussi → AuthController redirige vers scan/pointer
-    //   7. pointerApresScan() effectue le pointage + redirige au dashboard
+    // SCAN REDIRECT — point d'entrée après scan QR mural
     // ============================================
     public function scanRedirect(): void
     {
@@ -61,7 +49,6 @@ class SchoolQrController
             exit;
         }
 
-        // Verifier que le token existe et est actif en BDD
         $stmt = $this->db->prepare("SELECT * FROM school_qr WHERE token = ? AND is_active = 1 LIMIT 1");
         $stmt->execute([$token]);
         $schoolQr = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -71,23 +58,19 @@ class SchoolQrController
             exit;
         }
 
-        // Sauvegarder le token en session (survivra a la connexion)
         $_SESSION['scan_pending_token'] = $token;
 
-        // Etudiant deja connecte ? On pointe directement
         if (isset($_SESSION['user'])) {
             $this->effectuerPointageEtRediriger();
             return;
         }
 
-        // Pas connecte → page de login avec message explicatif
         header('Location: index.php?route=login&scan=1');
         exit;
     }
 
     // ============================================
-    // POINTER APRES SCAN — appele par AuthController apres connexion reussie
-    // si un scan_pending_token est en session.
+    // POINTER APRÈS SCAN — appelé par AuthController
     // ============================================
     public function pointerApresScan(): void
     {
@@ -97,9 +80,7 @@ class SchoolQrController
         }
 
         $token = $_SESSION['scan_pending_token'] ?? '';
-
         if (empty($token)) {
-            // Pas de scan en attente, on redirige juste au dashboard
             $this->redirigerDashboard();
             return;
         }
@@ -108,8 +89,7 @@ class SchoolQrController
     }
 
     // ============================================
-    // POINTER VIA AJAX (scanner integre dans l'app)
-    // Comportement inchange.
+    // POINTER VIA AJAX (scanner intégré dans l'app)
     // ============================================
     public function pointer(): void
     {
@@ -144,16 +124,13 @@ class SchoolQrController
             }
 
             $_POST['token'] = $qrEtu['token'];
-
         } else {
             $qrEtu = $this->qrCodeModel->trouverTokenValide($tokenScanne);
-
             if (!$qrEtu) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'QR Code invalide ou etudiant inactif']);
                 exit;
             }
-
             $_POST['token'] = $tokenScanne;
         }
 
@@ -177,7 +154,7 @@ class SchoolQrController
     }
 
     // ============================================
-    // METTRE A JOUR LA CONFIG GPS (ADMIN)
+    // METTRE À JOUR LA CONFIG GPS (ADMIN)
     // ============================================
     public function updateConfig(): void
     {
@@ -209,7 +186,8 @@ class SchoolQrController
             $stmt2->execute([$token, $latitude, $longitude, $rayon]);
         }
 
-        $this->logAction('update_gps', 'school_qr', '');
+        // LOG admin qui modifie la config GPS
+        $this->logAction('update_gps', 'school_qr', $_SESSION['user']['id'] ?? '');
 
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'message' => 'Configuration GPS mise a jour !']);
@@ -217,8 +195,7 @@ class SchoolQrController
     }
 
     // ============================================
-    // REGENERER LE QR CODE ECOLE
-    // Retourne maintenant aussi l'URL a encoder
+    // RÉGÉNÉRER LE QR CODE ÉCOLE
     // ============================================
     public function regenerer(): void
     {
@@ -250,16 +227,16 @@ class SchoolQrController
     }
 
     // ============================================
-    // PRIVE — effectue le pointage directement via les models
-    // (sans passer par pointerAuto() pour eviter le JSON brut)
+    // PRIVÉ — effectue le pointage via les models
     // ============================================
     private function effectuerPointageEtRediriger(): void
     {
-        unset($_SESSION['scan_pending_token']); // consommer le token (usage unique)
+        unset($_SESSION['scan_pending_token']);
 
         require_once __DIR__ . '/../models/Attendance.php';
 
         $userId          = $_SESSION['user']['id'];
+        $nomEtudiant     = $_SESSION['user']['nom'] ?? '';
         $qrEtu           = $this->qrCodeModel->parUtilisateur($userId);
 
         if (!$qrEtu) {
@@ -272,42 +249,42 @@ class SchoolQrController
         $heure           = date('H:i:s');
         $heureLimite     = '08:30:00';
 
-        // Cas 1 : arrive mais pas encore parti → depart
+        // Cas 1 : déjà arrivé → départ
         $pointageOuvert = $attendanceModel->pointageOuvert($userId, $today);
         if ($pointageOuvert) {
             $attendanceModel->marquerDepart($userId, $today, $heure);
-            $this->logAction('checkout', $_SESSION['user']['nom'] ?? '', (string) $userId);
+            // ✅ user_id = étudiant lui-même
+            $this->logAction('checkout', $nomEtudiant, $userId);
             $this->redirigerDashboard('Depart enregistre a ' . substr($heure, 0, 5), 'scan_ok');
             return;
         }
 
-        // Cas 2 : deja pointe arrivee + depart → rien a faire
+        // Cas 2 : déjà complet
         if ($attendanceModel->existePourDate($userId, $today)) {
             $this->redirigerDashboard('Vous avez deja pointe arrivee et depart aujourd\'hui.', 'scan_info');
             return;
         }
 
-        // Cas 3 : pas encore pointe → arrivee
+        // Cas 3 : arrivée
         $type = ($heure > $heureLimite) ? 'retard' : 'present';
         $attendanceModel->creerArrivee(
             $userId, $type, $today, $heure,
             14.679620, -17.441229,
             'Etablissement scolaire — Dakar', 'valide'
         );
-        $this->logAction('checkin', $_SESSION['user']['nom'] ?? '', (string) $userId);
+        // ✅ user_id = étudiant lui-même
+        $this->logAction('checkin', $nomEtudiant, $userId);
         $this->redirigerDashboard('Arrivee enregistree a ' . substr($heure, 0, 5), 'scan_ok');
     }
 
     private function redirigerDashboard(string $message = '', string $type = ''): void
     {
-        $role = $_SESSION['user']['role'] ?? 'etudiant';
-        $base = ($role === 'etudiant') ? 'etudiant/dashboard' : 'dashboard';
-
+        $role   = $_SESSION['user']['role'] ?? 'etudiant';
+        $base   = ($role === 'etudiant') ? 'etudiant/dashboard' : 'dashboard';
         $params = '';
         if (!empty($message)) {
             $params = '&scan_msg=' . urlencode($message) . '&scan_type=' . urlencode($type);
         }
-
         header('Location: index.php?route=' . $base . $params);
         exit;
     }
@@ -320,13 +297,25 @@ class SchoolQrController
         return $protocole . '://' . $hote . $chemin;
     }
 
-    private function logAction(string $action, string $entity = '', string $entityId = ''): void
-    {
+    // ✅ CORRECTION CLÉE :
+    // forceUserId = UUID de l'étudiant qui a pointé
+    // (pas l'admin connecté qui scanne)
+    private function logAction(
+        string $action,
+        string $entity      = '',
+        string $forceUserId = ''
+    ): void {
         try {
-            $userId = $_SESSION['user']['id'] ?? null;
-            $ip     = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-            $stmt   = $this->db->prepare("INSERT INTO audit_logs (user_id, action, entity, entity_id, ip) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$userId, $action, $entity, $entityId, $ip]);
+            $userId = !empty($forceUserId)
+                ? $forceUserId
+                : ($_SESSION['user']['id'] ?? null);
+
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            $stmt = $this->db->prepare(
+                "INSERT INTO audit_logs (user_id, action, entity, entity_id, ip)
+                 VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$userId, $action, $entity, null, $ip]);
         } catch (\Exception $e) {}
     }
 }

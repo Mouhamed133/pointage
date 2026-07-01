@@ -118,7 +118,7 @@ class UserController
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = 'diopmouhamed101005@gmail.com';
-            $mail->Password   = 'dmhxuyqmitzsecrx';
+            $mail->Password   = 'wdmjmzyigtqbodiz';
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
             $mail->CharSet    = 'UTF-8';

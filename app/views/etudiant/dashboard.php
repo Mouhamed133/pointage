@@ -3,6 +3,7 @@ $nom             = $_SESSION['user']['nom']   ?? 'Etudiant';
 $email           = $_SESSION['user']['email'] ?? '';
 $role            = $_SESSION['user']['role']  ?? 'etudiant';
 $dept            = $_SESSION['user']['department'] ?? '';
+$photo           = $_SESSION['user']['photo'] ?? null;
 $qrToken         = $qrToken         ?? null;
 $pointageAujourdhui = $pointageAujourdhui ?? null;
 $presents        = $presents        ?? 0;
@@ -12,9 +13,11 @@ $totalJours      = $totalJours      ?? 0;
 $historique      = $historique      ?? [];
 $conges          = $conges          ?? [];
 
-// Message de pointage après scan du QR mural
 $scanMsg  = $_GET['scan_msg']  ?? '';
 $scanType = $_GET['scan_type'] ?? '';
+
+// Photo de profil
+$photoUrl = $photo ? 'uploads/photos/' . htmlspecialchars($photo) : null;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -49,14 +52,15 @@ $scanType = $_GET['scan_type'] ?? '';
     .stat-accent-blue{border-left:3px solid #60a5fa}
     input,select,textarea{background:#0a0e1a;border:1px solid #1e2a4a;border-radius:10px;color:#e2e8f0;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;width:100%}
     input:focus,select:focus,textarea:focus{border-color:#34d399}
+    input[type="file"]{padding:8px;cursor:pointer}
+    input[type="date"]{color-scheme:dark;cursor:pointer}
+    input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.6;cursor:pointer}
     .btn-primary{background:#059669;color:white;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
     .btn-primary:hover{background:#047857;transform:translateY(-1px)}
     .btn-secondary{background:#1e2a4a;color:#e2e8f0;border:1px solid #2d3f6a;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
     .btn-secondary:hover{background:#253354}
     .btn-danger{background:#7f1d1d;color:#fca5a5;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
     .btn-danger:hover{background:#991b1b}
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center}
-    .modal{background:#0f1629;border:1px solid #1e2a4a;border-radius:20px;padding:32px;width:480px;max-width:90vw;max-height:85vh;overflow-y:auto}
     .toast{position:fixed;bottom:24px;right:24px;background:#0f1629;border:1px solid #1e2a4a;border-radius:12px;padding:14px 18px;z-index:9999;animation:slide-in .3s ease;display:flex;align-items:center;gap:10px;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
     ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0a0e1a}::-webkit-scrollbar-thumb{background:#1e2a4a;border-radius:3px}
     .view{display:none}
@@ -69,6 +73,16 @@ $scanType = $_GET['scan_type'] ?? '';
     .sidebar.collapsed{transform:translateX(-240px)}
     .main-content{margin-left:240px;min-height:100vh;transition:margin .3s ease}
     .main-content.expanded{margin-left:0}
+    /* Photo de profil */
+    .avatar-upload{position:relative;display:inline-block;cursor:pointer}
+    .avatar-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;border-radius:50%;width:100%;height:100%}
+    .avatar-img{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #1e2a4a}
+    .avatar-initials{width:96px;height:96px;border-radius:50%;background:#064e3b;color:#34d399;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px;border:3px solid #1e2a4a}
+    .avatar-overlay{position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-size:20px}
+    .avatar-upload:hover .avatar-overlay{opacity:1}
+    /* Strength password */
+    .pwd-bar{height:4px;border-radius:2px;background:#1e2a4a;overflow:hidden;margin-top:6px}
+    .pwd-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
     @media (max-width: 768px) {
       .sidebar{transform:translateX(-240px)}
       .sidebar.mobile-open{transform:translateX(0);box-shadow:4px 0 20px rgba(0,0,0,.5)}
@@ -76,7 +90,6 @@ $scanType = $_GET['scan_type'] ?? '';
       .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
       .sidebar-overlay.active{display:block}
       #page-title{font-size:14px}
-      .sticky .text-xs.bg-emerald-900\/50{display:none}
       .grid.grid-cols-2.lg\:grid-cols-4{grid-template-columns:repeat(2,1fr);gap:10px}
       .card.p-5{padding:12px}
       .text-3xl{font-size:1.4rem}
@@ -88,13 +101,7 @@ $scanType = $_GET['scan_type'] ?? '';
       .max-w-lg{max-width:100%}
       .max-w-sm{max-width:100%}
       .modal{width:95vw;padding:20px;max-height:90vh}
-      .text-xl{font-size:16px}
-      .flex.gap-3 .btn-secondary,.flex.gap-3 .btn-primary{padding:8px 12px;font-size:13px}
       .grid.grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-3{grid-template-columns:1fr}
-    }
-    @media (max-width: 480px) {
-      #page-title{font-size:13px}
-      .grid.grid-cols-2.lg\:grid-cols-4{gap:8px}
     }
   </style>
 </head>
@@ -114,7 +121,7 @@ $scanType = $_GET['scan_type'] ?? '';
       </div>
     </div>
   </div>
-  <div class="p-3 mt-2 flex-1">
+  <div class="p-3 mt-2 flex-1 overflow-y-auto">
     <p class="text-[11px] uppercase tracking-widest text-slate-600 px-3 mb-2">Navigation</p>
     <nav id="main-nav" class="space-y-1">
       <div class="nav-item active" data-view="accueil">
@@ -137,9 +144,9 @@ $scanType = $_GET['scan_type'] ?? '';
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Mes Absences
       </div>
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Justificatif PDF
+      <div class="nav-item" data-view="profil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Mon Profil
       </div>
     </nav>
     <div class="mt-6">
@@ -152,7 +159,11 @@ $scanType = $_GET['scan_type'] ?? '';
   </div>
   <div class="p-4 border-t border-[#1e2a4a]">
     <div class="flex items-center gap-3">
-      <div style="width:36px;height:36px;border-radius:50%;background:#064e3b;color:#34d399;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0"><?= strtoupper(substr($nom, 0, 2)) ?></div>
+      <?php if ($photoUrl): ?>
+        <img src="<?= $photoUrl ?>" alt="photo" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0">
+      <?php else: ?>
+        <div style="width:36px;height:36px;border-radius:50%;background:#064e3b;color:#34d399;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0"><?= strtoupper(substr($nom, 0, 2)) ?></div>
+      <?php endif; ?>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-600 text-white truncate"><?= htmlspecialchars($nom) ?></p>
         <p class="text-[11px] text-slate-500 truncate"><?= htmlspecialchars($dept) ?></p>
@@ -172,16 +183,12 @@ $scanType = $_GET['scan_type'] ?? '';
     </div>
     <div class="flex items-center gap-3">
       <div class="mono text-xs text-slate-400" id="clock-display">--:--:--</div>
-      <span class="text-xs bg-emerald-900/50 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full"><?= htmlspecialchars($dept) ?></span>
+      <span class="text-xs bg-emerald-900/50 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full hidden sm:inline"><?= htmlspecialchars($dept) ?></span>
     </div>
   </div>
 
   <div class="p-6">
 
-    <!-- ============================================ -->
-    <!-- BANDEAU CONFIRMATION POINTAGE POST-SCAN QR   -->
-    <!-- Affiché si l'étudiant arrive depuis scan/pointer -->
-    <!-- ============================================ -->
     <?php if (!empty($scanMsg)): ?>
     <?php
       $scanStyles = [
@@ -191,29 +198,19 @@ $scanType = $_GET['scan_type'] ?? '';
       ];
       $s = $scanStyles[$scanType] ?? $scanStyles['scan_info'];
     ?>
-    <div class="scan-confirm mb-5 p-4 rounded-2xl flex items-center gap-4"
-         style="background:<?= $s['bg'] ?>;border:1px solid <?= $s['border'] ?>">
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-           style="background:<?= $s['iconBg'] ?>">
-        <?= $s['emoji'] ?>
-      </div>
+    <div class="scan-confirm mb-5 p-4 rounded-2xl flex items-center gap-4" style="background:<?= $s['bg'] ?>;border:1px solid <?= $s['border'] ?>">
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl" style="background:<?= $s['iconBg'] ?>"><?= $s['emoji'] ?></div>
       <div>
         <p class="font-600 text-white text-sm"><?= htmlspecialchars($scanMsg) ?></p>
         <p class="text-xs mt-0.5" style="color:<?= $s['icon'] ?>">
-          <?php if ($scanType === 'scan_ok'): ?>
-            Pointage enregistré via QR Code de l'établissement
-          <?php elseif ($scanType === 'erreur'): ?>
-            Contactez l'administrateur si le problème persiste
-          <?php else: ?>
-            Informations de pointage
-          <?php endif; ?>
+          <?php if ($scanType === 'scan_ok'): ?>Pointage enregistre via QR Code
+          <?php elseif ($scanType === 'erreur'): ?>Contactez l'administrateur si le probleme persiste
+          <?php else: ?>Informations de pointage<?php endif; ?>
         </p>
       </div>
-      <button onclick="this.parentElement.remove()"
-              style="margin-left:auto;background:none;border:none;color:#475569;cursor:pointer;font-size:18px;padding:4px 8px">×</button>
+      <button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#475569;cursor:pointer;font-size:18px;padding:4px 8px">×</button>
     </div>
     <?php endif; ?>
-    <!-- ============================================ -->
 
     <!-- ACCUEIL -->
     <div id="view-accueil" class="view active animate-in">
@@ -247,57 +244,34 @@ $scanType = $_GET['scan_type'] ?? '';
         </div>
       <?php endif; ?>
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="card p-5 stat-accent-green">
-          <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Presents</p>
-          <p class="text-3xl font-700 text-white mono"><?= $presents ?></p>
-          <p class="text-xs text-emerald-400 mt-1">Ce mois</p>
-        </div>
-        <div class="card p-5 stat-accent-yellow">
-          <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Retards</p>
-          <p class="text-3xl font-700 text-white mono"><?= $retards ?></p>
-          <p class="text-xs text-yellow-400 mt-1">Ce mois</p>
-        </div>
-        <div class="card p-5 stat-accent-red">
-          <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Absences</p>
-          <p class="text-3xl font-700 text-white mono"><?= $absences ?></p>
-          <p class="text-xs text-red-400 mt-1">Ce mois</p>
-        </div>
-        <div class="card p-5 stat-accent-blue">
-          <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Total Jours</p>
-          <p class="text-3xl font-700 text-white mono"><?= $totalJours ?></p>
-          <p class="text-xs text-blue-400 mt-1">Ce mois</p>
-        </div>
+        <div class="card p-5 stat-accent-green"><p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Presents</p><p class="text-3xl font-700 text-white mono"><?= $presents ?></p><p class="text-xs text-emerald-400 mt-1">Ce mois</p></div>
+        <div class="card p-5 stat-accent-yellow"><p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Retards</p><p class="text-3xl font-700 text-white mono"><?= $retards ?></p><p class="text-xs text-yellow-400 mt-1">Ce mois</p></div>
+        <div class="card p-5 stat-accent-red"><p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Absences</p><p class="text-3xl font-700 text-white mono"><?= $absences ?></p><p class="text-xs text-red-400 mt-1">Ce mois</p></div>
+        <div class="card p-5 stat-accent-blue"><p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Total Jours</p><p class="text-3xl font-700 text-white mono"><?= $totalJours ?></p><p class="text-xs text-blue-400 mt-1">Ce mois</p></div>
       </div>
-      <div class="grid grid-cols-1 gap-4">
-        <div class="card">
-          <div class="p-5 border-b border-[#1e2a4a] flex items-center justify-between">
-            <p class="font-600 text-white">Derniers pointages</p>
-            <button onclick="switchView('historique')" class="text-xs text-emerald-400">Voir tout</button>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-            <?php if (empty($historique)): ?>
-              <p class="text-slate-500 text-sm text-center py-6 col-span-full">Aucun pointage</p>
-            <?php else: ?>
-              <?php foreach (array_slice($historique, 0, 5) as $h): ?>
-              <?php
-                $badges = ['present'=>'badge-present','retard'=>'badge-retard','absence'=>'badge-absent'];
-                $labels = ['present'=>'Present','retard'=>'Retard','absence'=>'Absent'];
-                $cls = $badges[$h['type']] ?? 'badge-pending';
-                $lbl = $labels[$h['type']] ?? $h['type'];
-              ?>
-              <div class="card p-4 flex flex-col gap-3">
-                <div class="flex items-center justify-between">
-                  <span class="mono text-sm text-white"><?= $h['date'] ?></span>
-                  <span class="text-xs <?= $cls ?> px-2.5 py-1 rounded-full"><?= $lbl ?></span>
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-[#1e2a4a]">
-                  <div class="text-xs"><span class="text-slate-600">Arrivee</span><br><span class="mono text-emerald-400"><?= $h['check_in'] ? substr($h['check_in'],0,5) : '--' ?></span></div>
-                  <div class="text-xs text-right"><span class="text-slate-600">Depart</span><br><span class="mono text-blue-400"><?= $h['check_out'] ? substr($h['check_out'],0,5) : '--' ?></span></div>
-                </div>
+      <div class="card">
+        <div class="p-5 border-b border-[#1e2a4a] flex items-center justify-between">
+          <p class="font-600 text-white">Derniers pointages</p>
+          <button onclick="switchView('historique')" class="text-xs text-emerald-400">Voir tout</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+          <?php if (empty($historique)): ?>
+            <p class="text-slate-500 text-sm text-center py-6 col-span-full">Aucun pointage</p>
+          <?php else: ?>
+            <?php foreach (array_slice($historique, 0, 5) as $h): ?>
+            <?php $badges=['present'=>'badge-present','retard'=>'badge-retard','absence'=>'badge-absent'];$labels=['present'=>'Present','retard'=>'Retard','absence'=>'Absent'];$cls=$badges[$h['type']]??'badge-pending';$lbl=$labels[$h['type']]??$h['type']; ?>
+            <div class="card p-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <span class="mono text-sm text-white"><?= $h['date'] ?></span>
+                <span class="text-xs <?= $cls ?> px-2.5 py-1 rounded-full"><?= $lbl ?></span>
               </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
+              <div class="flex items-center justify-between pt-2 border-t border-[#1e2a4a]">
+                <div class="text-xs"><span class="text-slate-600">Arrivee</span><br><span class="mono text-emerald-400"><?= $h['check_in'] ? substr($h['check_in'],0,5) : '--' ?></span></div>
+                <div class="text-xs text-right"><span class="text-slate-600">Depart</span><br><span class="mono text-blue-400"><?= $h['check_out'] ? substr($h['check_out'],0,5) : '--' ?></span></div>
+              </div>
+            </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -320,7 +294,7 @@ $scanType = $_GET['scan_type'] ?? '';
         </div>
         <div id="tab-ecole" class="card p-5">
           <p class="font-600 text-white mb-1">Scanner le QR Code de l'ecole</p>
-          <p class="text-xs text-slate-400 mb-4">Scannez le QR Code affiche a l'entree de l'etablissement — l'arrivee ou le depart est detecte automatiquement</p>
+          <p class="text-xs text-slate-400 mb-4">Scannez le QR Code affiche a l'entree — arrivee ou depart detecte automatiquement</p>
           <div id="scan-status-ecole" class="mb-3 p-3 rounded-xl text-center text-sm font-500" style="background:#1a2333;color:#60a5fa;border:1px solid #1e3a5f">Camera non active</div>
           <div id="etu-qr-reader-ecole" class="mb-3 rounded-xl overflow-hidden" style="background:#000;min-height:60px"></div>
           <div class="grid grid-cols-2 gap-2">
@@ -330,7 +304,7 @@ $scanType = $_GET['scan_type'] ?? '';
         </div>
         <div id="tab-perso" class="card p-5" style="display:none">
           <p class="font-600 text-white mb-1">Scanner mon QR Code personnel</p>
-          <p class="text-xs text-slate-400 mb-4">Scannez votre propre QR Code — l'arrivee ou le depart est detecte automatiquement</p>
+          <p class="text-xs text-slate-400 mb-4">Scannez votre propre QR Code — arrivee ou depart detecte automatiquement</p>
           <div id="scan-status-perso" class="mb-3 p-3 rounded-xl text-center text-sm font-500" style="background:#1a2333;color:#60a5fa;border:1px solid #1e3a5f">Camera non active</div>
           <div id="etu-qr-reader-perso" class="mb-3 rounded-xl overflow-hidden" style="background:#000;min-height:60px"></div>
           <div class="grid grid-cols-2 gap-2">
@@ -356,11 +330,10 @@ $scanType = $_GET['scan_type'] ?? '';
             <p class="mono text-xs text-slate-500 break-all px-2 mb-4"><?= htmlspecialchars($qrToken) ?></p>
             <div class="flex gap-3">
               <button onclick="telechargerQR()" class="btn-primary flex-1 py-3">Telecharger QR</button>
-              <button onclick="regenererMonQR()" class="btn-danger flex-1 py-3">Regenerer mon QR Code</button>
+              <button onclick="regenererMonQR()" class="btn-danger flex-1 py-3">Regenerer</button>
             </div>
           <?php else: ?>
-            <p class="text-slate-500">Pas de QR Code disponible.</p>
-            <p class="text-xs text-slate-600 mt-2">Contactez l'administrateur.</p>
+            <p class="text-slate-500">Pas de QR Code disponible. Contactez l'administrateur.</p>
           <?php endif; ?>
         </div>
       </div>
@@ -378,17 +351,11 @@ $scanType = $_GET['scan_type'] ?? '';
           <?php else: ?>
             <?php foreach ($historique as $h): ?>
             <?php
-              $duree = '--';
-              if ($h['check_in'] && $h['check_out']) {
-                $ci = explode(':', $h['check_in']);
-                $co = explode(':', $h['check_out']);
-                $mins = (intval($co[0])*60+intval($co[1]))-(intval($ci[0])*60+intval($ci[1]));
-                $duree = floor($mins/60).'h'.str_pad($mins%60,2,'0',STR_PAD_LEFT);
-              }
-              $badges = ['present'=>'badge-present','retard'=>'badge-retard','absence'=>'badge-absent'];
-              $labels = ['present'=>'Present','retard'=>'Retard','absence'=>'Absent'];
-              $cls = $badges[$h['type']] ?? 'badge-pending';
-              $lbl = $labels[$h['type']] ?? $h['type'];
+              $duree='--';
+              if($h['check_in']&&$h['check_out']){$ci=explode(':',$h['check_in']);$co=explode(':',$h['check_out']);$mins=(intval($co[0])*60+intval($co[1]))-(intval($ci[0])*60+intval($ci[1]));$duree=floor($mins/60).'h'.str_pad($mins%60,2,'0',STR_PAD_LEFT);}
+              $badges=['present'=>'badge-present','retard'=>'badge-retard','absence'=>'badge-absent'];
+              $labels=['present'=>'Present','retard'=>'Retard','absence'=>'Absent'];
+              $cls=$badges[$h['type']]??'badge-pending';$lbl=$labels[$h['type']]??$h['type'];
             ?>
             <div class="card p-4 flex flex-col gap-3">
               <div class="flex items-center justify-between">
@@ -426,15 +393,11 @@ $scanType = $_GET['scan_type'] ?? '';
           <?php else: ?>
             <?php foreach ($conges as $c): ?>
             <?php
-              $badgesC = ['en_attente'=>'badge-pending','approuve'=>'badge-present','refuse'=>'badge-absent'];
-              $labelsC = ['en_attente'=>'En attente','approuve'=>'Approuve','refuse'=>'Refuse'];
-              $clsC = $badgesC[$c['status']] ?? 'badge-pending';
-              $lblC = $labelsC[$c['status']] ?? $c['status'];
-              $typeLabel = ['maladie'=>'Maladie','conge_annuel'=>'Conge','urgence'=>'Urgence','autre'=>'Autre','absence_passee'=>'Absence passee','absence_future'=>'Absence future'];
-              $today = date('Y-m-d');
-              $dateAbs = $c['date_absence'] ?? $c['start_date'];
-              $estPassee = $c['start_date'] <= $today;
-              $absType = $estPassee ? 'Passee' : 'Future';
+              $badgesC=['en_attente'=>'badge-pending','approuve'=>'badge-present','refuse'=>'badge-absent'];
+              $labelsC=['en_attente'=>'En attente','approuve'=>'Approuve','refuse'=>'Refuse'];
+              $clsC=$badgesC[$c['status']]??'badge-pending';$lblC=$labelsC[$c['status']]??$c['status'];
+              $typeLabel=['maladie'=>'Maladie','conge_annuel'=>'Conge','urgence'=>'Urgence','autre'=>'Autre','absence_passee'=>'Absence passee','absence_future'=>'Absence future'];
+              $today=date('Y-m-d');$dateAbs=$c['date_absence']??$c['start_date'];$estPassee=$c['start_date']<=$today;$absType=$estPassee?'Passee':'Future';
             ?>
             <div class="card p-4 flex flex-col gap-3">
               <div class="flex items-center justify-between gap-2">
@@ -445,9 +408,7 @@ $scanType = $_GET['scan_type'] ?? '';
                 <span class="text-xs <?= $clsC ?> px-2.5 py-1 rounded-full"><?= $lblC ?></span>
               </div>
               <div class="text-xs text-slate-400"><?= $typeLabel[$c['type']] ?? $c['type'] ?></div>
-              <?php if (!empty($c['reason'])): ?>
-                <p class="text-xs text-slate-400 line-clamp-2"><?= htmlspecialchars($c['reason']) ?></p>
-              <?php endif; ?>
+              <?php if (!empty($c['reason'])): ?><p class="text-xs text-slate-400 line-clamp-2"><?= htmlspecialchars($c['reason']) ?></p><?php endif; ?>
               <div class="pt-2 border-t border-[#1e2a4a]">
                 <?php if (!empty($c['document'])): ?>
                   <a href="uploads/justificatifs/<?= htmlspecialchars($c['document']) ?>" target="_blank" class="text-xs text-emerald-400 underline">Voir document</a>
@@ -495,7 +456,7 @@ $scanType = $_GET['scan_type'] ?? '';
             </div>
             <div id="abs-document-section" style="display:none">
               <label class="text-xs text-slate-500 block mb-1">Document justificatif (PDF, JPG, PNG — max 5MB)</label>
-              <input type="file" id="abs-document" accept=".pdf,.jpg,.jpeg,.png" style="padding:8px;cursor:pointer">
+              <input type="file" id="abs-document" accept=".pdf,.jpg,.jpeg,.png">
               <p class="text-xs text-slate-500 mt-1">Certificat medical, attestation... (optionnel mais recommande)</p>
             </div>
             <div id="abs-info-box" style="background:#1a2333;border:1px solid #1e3a5f;border-radius:10px;padding:12px 16px;font-size:13px;color:#60a5fa;display:none"></div>
@@ -508,6 +469,88 @@ $scanType = $_GET['scan_type'] ?? '';
       </div>
     </div>
 
+    <!-- ============================================ -->
+    <!-- MON PROFIL                                   -->
+    <!-- ============================================ -->
+    <div id="view-profil" class="view animate-in">
+      <div class="max-w-lg mx-auto space-y-5">
+
+        <!-- CARTE PHOTO + INFOS -->
+        <div class="card p-6">
+          <h2 class="font-700 text-white text-lg mb-5">Mon Profil</h2>
+
+          <!-- Photo de profil -->
+          <div class="flex flex-col items-center gap-4 mb-6 pb-6 border-b border-[#1e2a4a]">
+            <div class="avatar-upload" title="Cliquer pour changer la photo">
+              <?php if ($photoUrl): ?>
+                <img src="<?= $photoUrl ?>" alt="photo" class="avatar-img" id="preview-photo">
+              <?php else: ?>
+                <div class="avatar-initials" id="preview-initials"><?= strtoupper(substr($nom, 0, 2)) ?></div>
+                <img src="" alt="" class="avatar-img" id="preview-photo" style="display:none">
+              <?php endif; ?>
+              <div class="avatar-overlay">📷</div>
+              <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" onchange="previewPhoto(this)">
+            </div>
+            <div class="text-center">
+              <p class="text-white font-600"><?= htmlspecialchars($nom) ?></p>
+              <p class="text-xs text-slate-400 mt-0.5"><?= htmlspecialchars($email) ?></p>
+              <span class="text-xs badge-present px-2 py-0.5 rounded-full mt-1 inline-block"><?= htmlspecialchars($dept) ?></span>
+            </div>
+            <button onclick="uploadPhoto()" id="btn-upload-photo" class="btn-secondary text-sm px-4 py-2" style="display:none">
+              Enregistrer la photo
+            </button>
+          </div>
+
+          <!-- Modifier nom -->
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Nom complet</label>
+              <input type="text" id="profil-nom" value="<?= htmlspecialchars($nom) ?>" placeholder="Votre nom complet">
+            </div>
+            <button onclick="sauvegarderNom()" class="btn-primary w-full py-2.5 text-sm">
+              Mettre a jour le nom
+            </button>
+          </div>
+        </div>
+
+        <!-- CHANGER MOT DE PASSE -->
+        <div class="card p-6">
+          <h3 class="font-600 text-white mb-1">Changer le mot de passe</h3>
+          <p class="text-xs text-slate-400 mb-5">Laissez vide si vous ne souhaitez pas le changer</p>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Mot de passe actuel</label>
+              <div style="position:relative">
+                <input type="password" id="pwd-actuel" placeholder="Votre mot de passe actuel">
+                <button type="button" onclick="togglePwd('pwd-actuel',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;cursor:pointer;font-size:16px">👁</button>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Nouveau mot de passe</label>
+              <div style="position:relative">
+                <input type="password" id="pwd-nouveau" placeholder="Au moins 6 caracteres" oninput="evaluerForce(this.value)">
+                <button type="button" onclick="togglePwd('pwd-nouveau',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;cursor:pointer;font-size:16px">👁</button>
+              </div>
+              <!-- Barre de force -->
+              <div class="pwd-bar mt-2"><div class="pwd-fill" id="pwd-fill"></div></div>
+              <p class="text-xs mt-1" id="pwd-force-label" style="color:#64748b"></p>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Confirmer le nouveau mot de passe</label>
+              <div style="position:relative">
+                <input type="password" id="pwd-confirm" placeholder="...">
+                <button type="button" onclick="togglePwd('pwd-confirm',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;cursor:pointer;font-size:16px">👁</button>
+              </div>
+            </div>
+            <button onclick="changerMotDePasse()" class="btn-primary w-full py-2.5 text-sm">
+              Changer le mot de passe
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -516,9 +559,7 @@ function updateClock(){document.getElementById('clock-display').textContent=new 
 setInterval(updateClock,1000);updateClock();
 
 function toggleSidebar(){
-  var sidebar=document.getElementById('sidebar');
-  var overlay=document.getElementById('sidebar-overlay');
-  var isMobile=window.innerWidth<=768;
+  var sidebar=document.getElementById('sidebar'),overlay=document.getElementById('sidebar-overlay'),isMobile=window.innerWidth<=768;
   if(isMobile){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('active');}
   else{sidebar.classList.toggle('collapsed');document.getElementById('main-content').classList.toggle('expanded');}
 }
@@ -532,7 +573,7 @@ function switchView(name){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var v=document.getElementById('view-'+name);if(v)v.classList.add('active');
   var n=document.querySelector('[data-view="'+name+'"]');if(n)n.classList.add('active');
-  var titles={accueil:'Mon Tableau de bord',pointer:'Me Pointer',monqr:'Mon QR Code',historique:'Mes Pointages',absences:'Mes Absences'};
+  var titles={accueil:'Mon Tableau de bord',pointer:'Me Pointer',monqr:'Mon QR Code',historique:'Mes Pointages',absences:'Mes Absences',profil:'Mon Profil'};
   document.getElementById('page-title').textContent=titles[name]||'';
   if(name==='pointer') initPointer();
 }
@@ -550,21 +591,139 @@ document.addEventListener('DOMContentLoaded',function(){
 
 function telechargerQR(){
   var c=document.getElementById('qr-grand');if(!c){showToast('QR non trouve','error');return;}
-  var canvas=c.querySelector('canvas');var img=c.querySelector('img');
+  var canvas=c.querySelector('canvas');
   if(canvas){var a=document.createElement('a');a.download='qrcode-<?= htmlspecialchars($nom) ?>.png';a.href=canvas.toDataURL('image/png');a.click();showToast('Telecharge !','success');}
-  else if(img){var a=document.createElement('a');a.download='qrcode-<?= htmlspecialchars($nom) ?>.png';a.href=img.src;a.click();showToast('Telecharge !','success');}
   else{showToast('QR non genere','error');}
 }
 function regenererMonQR(){
-  if(!confirm('Regenerer votre QR Code ? L\'ancien ne fonctionnera plus du tout.'))return;
+  if(!confirm('Regenerer votre QR Code ? L\'ancien ne fonctionnera plus.'))return;
   fetch('index.php?route=etudiant/qr/regenerer',{method:'POST'})
   .then(function(r){return r.json();})
   .then(function(res){
-    if(res.success){showToast('QR Code regenere !','success');setTimeout(function(){location.reload();},1200);}
+    if(res.success){showToast('QR regenere !','success');setTimeout(function(){location.reload();},1200);}
     else{showToast(res.message||'Erreur','error');}
   }).catch(function(){showToast('Erreur reseau','error');});
 }
 
+// ============================================
+// PROFIL — PHOTO
+// ============================================
+function previewPhoto(input){
+  if(!input.files||!input.files[0])return;
+  var file=input.files[0];
+  if(file.size > 5*1024*1024){showToast('Image trop lourde (max 5MB)','error');input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=document.getElementById('preview-photo');
+    var ini=document.getElementById('preview-initials');
+    img.src=e.target.result;img.style.display='block';
+    if(ini)ini.style.display='none';
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('btn-upload-photo').style.display='block';
+}
+
+function uploadPhoto(){
+  var input=document.getElementById('photo-input');
+  if(!input.files||!input.files[0]){showToast('Selectionnez une photo','error');return;}
+  var formData=new FormData();
+  formData.append('photo',input.files[0]);
+  var btn=document.getElementById('btn-upload-photo');
+  btn.textContent='Enregistrement...';btn.disabled=true;
+  fetch('index.php?route=etudiant/profil/photo',{method:'POST',body:formData})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.success){
+      showToast('Photo mise a jour !','success');
+      btn.style.display='none';
+      // Mettre à jour la photo dans la sidebar aussi
+      setTimeout(function(){location.reload();},1200);
+    } else {
+      showToast(res.message||'Erreur','error');
+      btn.textContent='Enregistrer la photo';btn.disabled=false;
+    }
+  }).catch(function(){showToast('Erreur reseau','error');btn.textContent='Enregistrer la photo';btn.disabled=false;});
+}
+
+// ============================================
+// PROFIL — NOM
+// ============================================
+function sauvegarderNom(){
+  var nom=document.getElementById('profil-nom').value.trim();
+  if(!nom){showToast('Le nom ne peut pas etre vide','error');return;}
+  fetch('index.php?route=profil/modifier',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'nom='+encodeURIComponent(nom)+'&email=<?= urlencode($email) ?>&password='
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.success){showToast('Nom mis a jour !','success');setTimeout(function(){location.reload();},1200);}
+    else{showToast(res.message||'Erreur','error');}
+  }).catch(function(){showToast('Erreur reseau','error');});
+}
+
+// ============================================
+// PROFIL — MOT DE PASSE
+// ============================================
+function togglePwd(id,btn){
+  var input=document.getElementById(id);
+  if(input.type==='password'){input.type='text';btn.textContent='🙈';}
+  else{input.type='password';btn.textContent='👁';}
+}
+
+function evaluerForce(pwd){
+  var fill=document.getElementById('pwd-fill');
+  var label=document.getElementById('pwd-force-label');
+  if(!pwd){fill.style.width='0';label.textContent='';return;}
+  var score=0;
+  if(pwd.length>=6)score++;
+  if(pwd.length>=10)score++;
+  if(/[A-Z]/.test(pwd))score++;
+  if(/[0-9]/.test(pwd))score++;
+  if(/[^A-Za-z0-9]/.test(pwd))score++;
+  var configs=[
+    {pct:'20%',color:'#ef4444',text:'Tres faible'},
+    {pct:'40%',color:'#f97316',text:'Faible'},
+    {pct:'60%',color:'#eab308',text:'Moyen'},
+    {pct:'80%',color:'#22c55e',text:'Fort'},
+    {pct:'100%',color:'#10b981',text:'Tres fort'},
+  ];
+  var c=configs[score-1]||configs[0];
+  fill.style.width=c.pct;fill.style.background=c.color;
+  label.textContent=c.text;label.style.color=c.color;
+}
+
+function changerMotDePasse(){
+  var actuel=document.getElementById('pwd-actuel').value;
+  var nouveau=document.getElementById('pwd-nouveau').value;
+  var confirm=document.getElementById('pwd-confirm').value;
+  if(!actuel||!nouveau||!confirm){showToast('Tous les champs sont requis','error');return;}
+  if(nouveau.length<6){showToast('Le nouveau mot de passe doit avoir au moins 6 caracteres','error');return;}
+  if(nouveau!==confirm){showToast('Les mots de passe ne correspondent pas','error');return;}
+  fetch('index.php?route=etudiant/profil/password',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'password_actuel='+encodeURIComponent(actuel)+'&password_nouveau='+encodeURIComponent(nouveau)
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.success){
+      showToast('Mot de passe change !','success');
+      document.getElementById('pwd-actuel').value='';
+      document.getElementById('pwd-nouveau').value='';
+      document.getElementById('pwd-confirm').value='';
+      document.getElementById('pwd-fill').style.width='0';
+      document.getElementById('pwd-force-label').textContent='';
+    } else {
+      showToast(res.message||'Erreur','error');
+    }
+  }).catch(function(){showToast('Erreur reseau','error');});
+}
+
+// ============================================
+// ABSENCES
+// ============================================
 function ouvrirFormulaireAbsence(){var f=document.getElementById('form-absence');if(f){f.style.display='block';f.scrollIntoView({behavior:'smooth'});}}
 function fermerFormulaireAbsence(){var f=document.getElementById('form-absence');if(f)f.style.display='none';}
 
@@ -627,45 +786,25 @@ function calculerDistance(lat1,lng1,lat2,lng2){
 }
 function initPointer(){
   positionOK=false;
-  var statusBox=document.getElementById('geo-status');
-  var statusText=document.getElementById('geo-status-text');
-  var distText=document.getElementById('geo-distance-text');
-  statusBox.style.borderLeftColor='#60a5fa';
-  statusText.textContent='Chargement de la configuration...';
-  distText.textContent='En attente';
+  var statusBox=document.getElementById('geo-status'),statusText=document.getElementById('geo-status-text'),distText=document.getElementById('geo-distance-text');
+  statusBox.style.borderLeftColor='#60a5fa';statusText.textContent='Chargement de la configuration...';distText.textContent='En attente';
   fetch('index.php?route=school/config')
   .then(function(r){return r.json();})
   .then(function(res){
-    if(res.success&&res.data){
-      ECOLE_LAT=parseFloat(res.data.latitude)||14.679620;
-      ECOLE_LNG=parseFloat(res.data.longitude)||-17.441229;
-      RAYON_MAX=parseInt(res.data.rayon)||500;
-      var el=document.getElementById('rayon-display');if(el)el.textContent=RAYON_MAX+' metres';
-    }
+    if(res.success&&res.data){ECOLE_LAT=parseFloat(res.data.latitude)||14.679620;ECOLE_LNG=parseFloat(res.data.longitude)||-17.441229;RAYON_MAX=parseInt(res.data.rayon)||500;var el=document.getElementById('rayon-display');if(el)el.textContent=RAYON_MAX+' metres';}
     _demarrerGPS(statusBox,statusText,distText);
   }).catch(function(){_demarrerGPS(statusBox,statusText,distText);});
 }
 function _demarrerGPS(statusBox,statusText,distText){
   statusText.textContent='Verification de votre position...';distText.textContent='En attente GPS';
-  if(!navigator.geolocation){
-    statusBox.style.borderLeftColor='#f87171';statusText.textContent='Geolocalisation non supportee';distText.textContent='Votre navigateur ne supporte pas le GPS';return;
-  }
+  if(!navigator.geolocation){statusBox.style.borderLeftColor='#f87171';statusText.textContent='Geolocalisation non supportee';distText.textContent='Votre navigateur ne supporte pas le GPS';return;}
   navigator.geolocation.getCurrentPosition(
     function(pos){
       var dist=Math.round(calculerDistance(pos.coords.latitude,pos.coords.longitude,ECOLE_LAT,ECOLE_LNG));
-      if(dist<=RAYON_MAX){
-        positionOK=true;statusBox.style.borderLeftColor='#34d399';statusText.textContent='Position validee — vous etes sur place';distText.textContent='Distance : '+dist+'m de l\'etablissement';
-        setStatus('scan-status-ecole','Position OK — Activez la camera','success');setStatus('scan-status-perso','Position OK — Activez la camera','success');
-      } else {
-        positionOK=false;statusBox.style.borderLeftColor='#f87171';statusText.textContent='Hors du perimetre autorise';distText.textContent='Distance : '+dist+'m (max '+RAYON_MAX+'m) — Rapprochez-vous';
-        setStatus('scan-status-ecole','Hors perimetre — pointage impossible ('+dist+'m)','error');setStatus('scan-status-perso','Hors perimetre — pointage impossible ('+dist+'m)','error');
-      }
+      if(dist<=RAYON_MAX){positionOK=true;statusBox.style.borderLeftColor='#34d399';statusText.textContent='Position validee — vous etes sur place';distText.textContent='Distance : '+dist+'m de l\'etablissement';setStatus('scan-status-ecole','Position OK — Activez la camera','success');setStatus('scan-status-perso','Position OK — Activez la camera','success');}
+      else{positionOK=false;statusBox.style.borderLeftColor='#f87171';statusText.textContent='Hors du perimetre autorise';distText.textContent='Distance : '+dist+'m (max '+RAYON_MAX+'m) — Rapprochez-vous';setStatus('scan-status-ecole','Hors perimetre — pointage impossible ('+dist+'m)','error');setStatus('scan-status-perso','Hors perimetre — pointage impossible ('+dist+'m)','error');}
     },
-    function(err){
-      statusBox.style.borderLeftColor='#fbbf24';statusText.textContent='Position indisponible';
-      distText.textContent=err.code===1?'Autorisez la localisation dans votre navigateur':'Erreur GPS';
-      setStatus('scan-status-ecole','GPS indisponible — autorisez la localisation','warning');
-    },
+    function(err){statusBox.style.borderLeftColor='#fbbf24';statusText.textContent='Position indisponible';distText.textContent=err.code===1?'Autorisez la localisation dans votre navigateur':'Erreur GPS';setStatus('scan-status-ecole','GPS indisponible — autorisez la localisation','warning');},
     {enableHighAccuracy:true,timeout:10000,maximumAge:0}
   );
 }
@@ -686,10 +825,8 @@ function demarrerScanEcole(){
   if(!positionOK){showToast('Hors perimetre — pointage refuse','error');return;}
   if(scanEcoleActif)return;
   scannerEcole=new Html5Qrcode('etu-qr-reader-ecole');
-  scannerEcole.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},
-    function(decoded){var now=Date.now();if(now-lastScanEcole<3000)return;lastScanEcole=now;setStatus('scan-status-ecole','QR detecte ! Traitement...','info');envoyerViaQrEcole(decoded);},
-    function(){}
-  ).then(function(){scanEcoleActif=true;document.getElementById('btn-start-ecole').style.display='none';document.getElementById('btn-stop-ecole').style.display='block';setStatus('scan-status-ecole','Camera active — Scannez le QR de l\'ecole','success');})
+  scannerEcole.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},function(decoded){var now=Date.now();if(now-lastScanEcole<3000)return;lastScanEcole=now;setStatus('scan-status-ecole','QR detecte ! Traitement...','info');envoyerViaQrEcole(decoded);},function(){})
+  .then(function(){scanEcoleActif=true;document.getElementById('btn-start-ecole').style.display='none';document.getElementById('btn-stop-ecole').style.display='block';setStatus('scan-status-ecole','Camera active — Scannez le QR de l\'ecole','success');})
   .catch(function(){setStatus('scan-status-ecole','Impossible d\'acceder a la camera','error');});
 }
 function arreterScanEcole(){
@@ -700,22 +837,16 @@ function envoyerViaQrEcole(tokenEcole){
   fetch('index.php?route=school/pointer',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'token_ecole='+encodeURIComponent(tokenEcole)})
   .then(function(r){return r.json();})
   .then(function(res){
-    if(res.success){
-      var libelle=res.data&&res.data.mode==='depart'?'Depart':'Arrivee';
-      setStatus('scan-status-ecole',libelle+' enregistree !','success');showToast(res.message||'Pointage enregistre !','success');arreterScanEcole();setTimeout(function(){location.reload();},2000);
-    } else {
-      setStatus('scan-status-ecole','Erreur : '+res.message,'error');showToast(res.message,'error');
-    }
+    if(res.success){var libelle=res.data&&res.data.mode==='depart'?'Depart':'Arrivee';setStatus('scan-status-ecole',libelle+' enregistree !','success');showToast(res.message||'Pointage enregistre !','success');arreterScanEcole();setTimeout(function(){location.reload();},2000);}
+    else{setStatus('scan-status-ecole','Erreur : '+res.message,'error');showToast(res.message,'error');}
   }).catch(function(){showToast('Erreur reseau','error');});
 }
 function demarrerScanPerso(){
   if(!positionOK){showToast('Hors perimetre — pointage refuse','error');return;}
   if(scanPersoActif)return;
   scannerPerso=new Html5Qrcode('etu-qr-reader-perso');
-  scannerPerso.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},
-    function(decoded){var now=Date.now();if(now-lastScanPerso<3000)return;lastScanPerso=now;setStatus('scan-status-perso','QR detecte ! Traitement...','info');envoyerViaQrPerso(decoded);},
-    function(){}
-  ).then(function(){scanPersoActif=true;document.getElementById('btn-start-perso').style.display='none';document.getElementById('btn-stop-perso').style.display='block';setStatus('scan-status-perso','Camera active — Scannez votre QR Code','success');})
+  scannerPerso.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},function(decoded){var now=Date.now();if(now-lastScanPerso<3000)return;lastScanPerso=now;setStatus('scan-status-perso','QR detecte ! Traitement...','info');envoyerViaQrPerso(decoded);},function(){})
+  .then(function(){scanPersoActif=true;document.getElementById('btn-start-perso').style.display='none';document.getElementById('btn-stop-perso').style.display='block';setStatus('scan-status-perso','Camera active — Scannez votre QR Code','success');})
   .catch(function(){setStatus('scan-status-perso','Impossible d\'acceder a la camera','error');});
 }
 function arreterScanPerso(){
@@ -726,12 +857,8 @@ function envoyerViaQrPerso(token){
   fetch('index.php?route=presences/pointer',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'token='+encodeURIComponent(token)})
   .then(function(r){return r.json();})
   .then(function(res){
-    if(res.success){
-      var libelle=res.data&&res.data.mode==='depart'?'Depart':'Arrivee';
-      setStatus('scan-status-perso',libelle+' enregistree !','success');showToast(res.message||'Pointage enregistre !','success');arreterScanPerso();setTimeout(function(){location.reload();},2000);
-    } else {
-      setStatus('scan-status-perso','Erreur : '+res.message,'error');showToast(res.message,'error');
-    }
+    if(res.success){var libelle=res.data&&res.data.mode==='depart'?'Depart':'Arrivee';setStatus('scan-status-perso',libelle+' enregistree !','success');showToast(res.message||'Pointage enregistre !','success');arreterScanPerso();setTimeout(function(){location.reload();},2000);}
+    else{setStatus('scan-status-perso','Erreur : '+res.message,'error');showToast(res.message,'error');}
   }).catch(function(){showToast('Erreur reseau','error');});
 }
 
@@ -740,9 +867,144 @@ function showToast(msg,type){
   type=type||'info';var ex=document.querySelector('.toast');if(ex)ex.remove();clearTimeout(toastTimeout);
   var colors={success:'#34d399',error:'#f87171',info:'#60a5fa'};
   var t=document.createElement('div');t.className='toast';
-  t.innerHTML='<span style="color:'+colors[type]+';font-size:16px">'+(type==='success'?'&#10003;':'&#9432;')+'</span><span style="color:#e2e8f0">'+msg+'</span>';
+  t.innerHTML='<span style="color:'+colors[type]+';font-size:16px">'+(type==='success'?'&#10003;':type==='error'?'&#10005;':'&#9432;')+'</span><span style="color:#e2e8f0">'+msg+'</span>';
   document.body.appendChild(t);toastTimeout=setTimeout(function(){t.remove();},3500);
 }
 </script>
 </body>
 </html>
+
+<?php
+/*
+|=============================================================
+| ROUTES À AJOUTER dans votre index.php / routeur :
+|=============================================================
+|
+|  'etudiant/profil/photo'    => [EtudiantController::class, 'uploadPhoto']
+|  'etudiant/profil/password' => [EtudiantController::class, 'changerPassword']
+|
+|=============================================================
+| MÉTHODES À AJOUTER dans EtudiantController.php :
+|=============================================================
+
+    // ============================================
+    // UPLOAD PHOTO DE PROFIL (AJAX)
+    // ============================================
+    public function uploadPhoto(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(false, 'Methode non autorisee');
+            return;
+        }
+
+        $userId = $_SESSION['user']['id'] ?? '';
+        if (empty($userId)) {
+            $this->json(false, 'Non connecte');
+            return;
+        }
+
+        if (empty($_FILES['photo']['name'])) {
+            $this->json(false, 'Aucun fichier selectionne');
+            return;
+        }
+
+        $file    = $_FILES['photo'];
+        $ext     = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (!in_array($ext, $allowed)) {
+            $this->json(false, 'Format non supporte. Utilisez JPG, PNG ou WebP');
+            return;
+        }
+
+        if ($file['size'] > 5 * 1024 * 1024) {
+            $this->json(false, 'Image trop lourde (max 5MB)');
+            return;
+        }
+
+        // Créer le dossier si nécessaire
+        $uploadDir = __DIR__ . '/../../public/uploads/photos/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Supprimer l'ancienne photo si elle existe
+        $user = $this->userModel->findById($userId);
+        if ($user && !empty($user['photo'])) {
+            $oldFile = $uploadDir . $user['photo'];
+            if (file_exists($oldFile)) {
+                unlink($oldFile);
+            }
+        }
+
+        // Nouveau nom de fichier unique
+        $nomFichier = $userId . '_' . time() . '.' . $ext;
+        $destination = $uploadDir . $nomFichier;
+
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            $this->json(false, 'Erreur lors de l\'enregistrement');
+            return;
+        }
+
+        // Sauvegarder en base
+        $stmt = $this->db->prepare("UPDATE users SET photo = ? WHERE id = ?");
+        $stmt->execute([$nomFichier, $userId]);
+
+        // Mettre à jour la session
+        $_SESSION['user']['photo'] = $nomFichier;
+
+        $this->json(true, 'Photo mise a jour avec succes', ['photo' => $nomFichier]);
+    }
+
+    // ============================================
+    // CHANGER MOT DE PASSE (AJAX)
+    // ============================================
+    public function changerPassword(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(false, 'Methode non autorisee');
+            return;
+        }
+
+        $userId = $_SESSION['user']['id'] ?? '';
+        if (empty($userId)) {
+            $this->json(false, 'Non connecte');
+            return;
+        }
+
+        $pwdActuel  = $_POST['password_actuel']  ?? '';
+        $pwdNouveau = $_POST['password_nouveau']  ?? '';
+
+        if (empty($pwdActuel) || empty($pwdNouveau)) {
+            $this->json(false, 'Tous les champs sont requis');
+            return;
+        }
+
+        if (strlen($pwdNouveau) < 6) {
+            $this->json(false, 'Le nouveau mot de passe doit avoir au moins 6 caracteres');
+            return;
+        }
+
+        // Vérifier l'ancien mot de passe
+        $user = $this->userModel->findById($userId);
+        if (!$user || !password_verify($pwdActuel, $user['password_hash'])) {
+            $this->json(false, 'Mot de passe actuel incorrect');
+            return;
+        }
+
+        // Mettre à jour
+        $hash = password_hash($pwdNouveau, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+        $stmt->execute([$hash, $userId]);
+
+        $this->json(true, 'Mot de passe change avec succes');
+    }
+
+|=============================================================
+| COLONNE À AJOUTER dans la table users (si pas déjà fait) :
+|=============================================================
+|
+|  ALTER TABLE users ADD COLUMN photo VARCHAR(255) NULL DEFAULT NULL;
+|
+|=============================================================
+*/
