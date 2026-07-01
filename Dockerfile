@@ -22,9 +22,8 @@ WORKDIR /app
 
 COPY . .
 
-# Installer les dépendances PHP
 RUN composer install --no-dev --optimize-autoloader
 
 EXPOSE 80
 
-CMD ["frankenphp", "run"]
+CMD ["frankenphp", "php-server", "--root", "/app/public"]
