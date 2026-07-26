@@ -1,5 +1,6 @@
 <?php
 /**
+ * je met cette commande pour le forcer a envoyer les emails a l'instant (schtasks /run /tn "PointagePro_Alertes_Absences")
  * ============================================================
  * CRON JOB — Alertes Absences Quotidiennes
  * ============================================================

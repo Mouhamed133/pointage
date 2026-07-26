@@ -142,7 +142,7 @@ $photoUrl = $photo ? 'uploads/photos/' . htmlspecialchars($photo) : null;
       </div>
       <div class="nav-item" data-view="absences">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Mes Absences
+        Mes Demandes
       </div>
       <div class="nav-item" data-view="profil">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -339,37 +339,77 @@ $photoUrl = $photo ? 'uploads/photos/' . htmlspecialchars($photo) : null;
       </div>
     </div>
 
-    <!-- HISTORIQUE -->
-    <div id="view-historique" class="view animate-in">
+  <div id="view-historique" class="view animate-in">
       <div class="card">
         <div class="p-5 border-b border-[#1e2a4a]">
           <p class="font-600 text-white">Historique complet de mes pointages</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-          <?php if (empty($historique)): ?>
-            <p class="text-slate-500 text-sm text-center py-8 col-span-full">Aucun pointage enregistre</p>
+          <?php 
+          // On commence par filtrer l'historique pour exclure les absences déjà approuvées
+          $historiqueAffiche = array_filter($historique, function($h) use ($conges) {
+              if ($h['type'] === 'absence') {
+                  foreach ($conges as $c) {
+                      // On vérifie si une justification existe à cette date et si elle est approuvée
+                      // (Adapte 'start_date' ou le champ correspondant selon ta structure)
+                      if ($c['start_date'] === $h['date'] && $c['status'] === 'approuve') {
+                          return false; // On ne garde pas ce pointage dans l'affichage
+                      }
+                  }
+              }
+              return true; // On garde tous les autres pointages
+          });
+          ?>
+
+          <?php if (empty($historiqueAffiche)): ?>
+            <p class="text-slate-500 text-sm text-center py-8 col-span-full">Aucun pointage enregistré</p>
           <?php else: ?>
-            <?php foreach ($historique as $h): ?>
+            <?php foreach ($historiqueAffiche as $h): ?>
             <?php
               $duree='--';
               if($h['check_in']&&$h['check_out']){$ci=explode(':',$h['check_in']);$co=explode(':',$h['check_out']);$mins=(intval($co[0])*60+intval($co[1]))-(intval($ci[0])*60+intval($ci[1]));$duree=floor($mins/60).'h'.str_pad($mins%60,2,'0',STR_PAD_LEFT);}
               $badges=['present'=>'badge-present','retard'=>'badge-retard','absence'=>'badge-absent'];
-              $labels=['present'=>'Present','retard'=>'Retard','absence'=>'Absent'];
+              $labels=['present'=>'Présent','retard'=>'Retard','absence'=>'Absent'];
               $cls=$badges[$h['type']]??'badge-pending';$lbl=$labels[$h['type']]??$h['type'];
+              
+              // Vérifier si une justification est déjà en attente pour cette date
+              $dejaDemande = false;
+              foreach ($conges as $c) {
+                  if ($c['start_date'] === $h['date']) {
+                      $dejaDemande = true;
+                      break;
+                  }
+              }
             ?>
-            <div class="card p-4 flex flex-col gap-3">
-              <div class="flex items-center justify-between">
-                <span class="mono text-sm text-white"><?= $h['date'] ?></span>
-                <span class="text-xs <?= $cls ?> px-2.5 py-1 rounded-full"><?= $lbl ?></span>
+            <div class="card p-4 flex flex-col gap-3 justify-between">
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="mono text-sm text-white"><?= $h['date'] ?></span>
+                  <span class="text-xs <?= $cls ?> px-2.5 py-1 rounded-full"><?= $lbl ?></span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-500">Durée</span>
+                  <span class="mono text-slate-400"><?= $duree ?></span>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-[#1e2a4a]">
+                  <div class="text-xs"><span class="text-slate-600">Arrivée</span><br><span class="mono text-emerald-400"><?= $h['check_in'] ? substr($h['check_in'],0,5) : '--' ?></span></div>
+                  <div class="text-xs text-right"><span class="text-slate-600">Départ</span><br><span class="mono text-blue-400"><?= $h['check_out'] ? substr($h['check_out'],0,5) : '--' ?></span></div>
+                </div>
               </div>
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-slate-500">Duree</span>
-                <span class="mono text-slate-400"><?= $duree ?></span>
-              </div>
-              <div class="flex items-center justify-between pt-2 border-t border-[#1e2a4a]">
-                <div class="text-xs"><span class="text-slate-600">Arrivee</span><br><span class="mono text-emerald-400"><?= $h['check_in'] ? substr($h['check_in'],0,5) : '--' ?></span></div>
-                <div class="text-xs text-right"><span class="text-slate-600">Depart</span><br><span class="mono text-blue-400"><?= $h['check_out'] ? substr($h['check_out'],0,5) : '--' ?></span></div>
-              </div>
+              
+              <?php if($h['type'] === 'absence'): ?>
+                <div class="pt-2">
+                  <?php if($dejaDemande): ?>
+                    <div class="w-full text-center text-xs bg-amber-900/20 text-amber-400 border border-amber-800/40 py-2 rounded-xl font-medium cursor-not-allowed">
+                      Justification en attente...
+                    </div>
+                  <?php else: ?>
+                    <button onclick="ouvrirModalJustifier('<?= $h['date'] ?>')" class="w-full text-center text-xs bg-red-900/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 py-2 rounded-xl transition-all font-medium">
+                      Justifier mon absence
+                    </button>
+                  <?php endif; ?>
+                </div>
+              <?php endif; ?>
             </div>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -377,98 +417,142 @@ $photoUrl = $photo ? 'uploads/photos/' . htmlspecialchars($photo) : null;
       </div>
     </div>
 
-    <!-- ABSENCES -->
+    <!-- MODALE DE JUSTIFICATION DE POINTAGE -->
+    <div id="modal-justifier" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+      <!-- Overlay sombre -->
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="fermerModalJustifier()"></div>
+      <!-- Contenu modale -->
+      <div class="card w-full max-w-md p-6 relative z-10 animate-in">
+        <h3 class="font-700 text-white text-lg mb-1">Justifier l'absence</h3>
+        <p class="text-xs text-slate-400 mb-4">Date ciblée : <span id="modal-date-display" class="mono text-emerald-400 font-600"></span></p>
+        
+        <form id="modal-justif-form" class="space-y-4" onsubmit="soumettreJustificationModal(event)">
+          <input type="hidden" id="modal-abs-date">
+          
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Motif *</label>
+            <select id="modal-abs-motif" required>
+              <option value="">Choisir un motif...</option>
+              <option value="maladie">Maladie</option>
+              <option value="urgence">Urgence familiale</option>
+              <option value="rendez_vous_medical">Rendez-vous médical</option>
+              <option value="probleme_transport">Problème de transport</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Détails / Explications</label>
+            <textarea id="modal-abs-details" rows="3" placeholder="Précisez les raisons de votre absence..."></textarea>
+          </div>
+          
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Fichier justificatif (PDF, JPG, PNG — max 5MB)</label>
+            <input type="file" id="modal-abs-document" accept=".pdf,.jpg,.jpeg,.png">
+            <p class="text-[11px] text-slate-500 mt-1">Certificat médical, attestation...</p>
+          </div>
+          
+          <div class="flex gap-3 pt-2">
+            <button type="submit" id="modal-abs-submit-btn" class="btn-primary flex-1 py-2.5 text-sm">Envoyer à l'admin</button>
+            <button type="button" onclick="fermerModalJustifier()" class="btn-secondary py-2.5 px-4 text-sm">Annuler</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div id="view-absences" class="view animate-in">
       <div class="flex justify-end mb-4">
         <button onclick="ouvrirFormulaireAbsence()" class="btn-primary text-sm px-4 py-2">+ Nouvelle demande</button>
       </div>
+      
       <div class="card mb-5">
         <div class="p-5 border-b border-[#1e2a4a]">
-          <p class="font-600 text-white">Mes Demandes d'Absence</p>
-          <p class="text-xs text-slate-400 mt-1">Absence passee a justifier ou absence future a declarer</p>
+          <p class="font-600 text-white">Mes Demandes d'Absence Future</p>
+          <p class="text-xs text-slate-400 mt-1">Planifier ou déclarer une absence à l'avance</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-          <?php if (empty($conges)): ?>
-            <p class="text-slate-500 text-sm text-center py-8 col-span-full">Aucune demande</p>
+          <?php 
+          // On filtre pour n'afficher ici que les demandes dont la date est supérieure ou égale à aujourd'hui
+          $today = date('Y-m-d');
+          $demandesFutures = array_filter($conges, function($c) use ($today) {
+              return $c['start_date'] >= $today;
+          });
+          ?>
+
+          <?php if (empty($demandesFutures)): ?>
+            <p class="text-slate-500 text-sm text-center py-8 col-span-full">Aucune demande d'absence future enregistrée</p>
           <?php else: ?>
-            <?php foreach ($conges as $c): ?>
+            <?php foreach ($demandesFutures as $c): ?>
             <?php
-              $badgesC=['en_attente'=>'badge-pending','approuve'=>'badge-present','refuse'=>'badge-absent'];
-              $labelsC=['en_attente'=>'En attente','approuve'=>'Approuve','refuse'=>'Refuse'];
-              $clsC=$badgesC[$c['status']]??'badge-pending';$lblC=$labelsC[$c['status']]??$c['status'];
-              $typeLabel=['maladie'=>'Maladie','conge_annuel'=>'Conge','urgence'=>'Urgence','autre'=>'Autre','absence_passee'=>'Absence passee','absence_future'=>'Absence future'];
-              $today=date('Y-m-d');$dateAbs=$c['date_absence']??$c['start_date'];$estPassee=$c['start_date']<=$today;$absType=$estPassee?'Passee':'Future';
+              $badgesC = ['en_attente'=>'badge-pending', 'approuve'=>'badge-present', 'refuse'=>'badge-absent'];
+              $labelsC = ['en_attente'=>'En attente', 'approuve'=>'Approuvé', 'refuse'=>'Refusé'];
+              $clsC = $badgesC[$c['status']] ?? 'badge-pending';
+              $lblC = $labelsC[$c['status']] ?? $c['status'];
+              
+              $typeLabel = [
+                'maladie'=>'Maladie',
+                'conge_annuel'=>'Congé',
+                'urgence'=>'Urgence familiale',
+                'rendez_vous_medical'=>'Rendez-vous médical',
+                'probleme_transport'=>'Problème de transport',
+                'autre'=>'Autre'
+              ];
             ?>
             <div class="card p-4 flex flex-col gap-3">
               <div class="flex items-center justify-between gap-2">
                 <div>
-                  <span class="mono text-sm text-white"><?= $dateAbs ?></span>
-                  <span class="text-[10px] <?= $estPassee ? 'badge-absent' : 'badge-pending' ?> px-1.5 py-0.5 rounded ml-1"><?= $absType ?></span>
+                  <span class="mono text-sm text-white"><?= $c['start_date'] ?></span>
+                  <span class="text-[10px] badge-pending px-1.5 py-0.5 rounded ml-1">Future</span>
                 </div>
                 <span class="text-xs <?= $clsC ?> px-2.5 py-1 rounded-full"><?= $lblC ?></span>
               </div>
-              <div class="text-xs text-slate-400"><?= $typeLabel[$c['type']] ?? $c['type'] ?></div>
-              <?php if (!empty($c['reason'])): ?><p class="text-xs text-slate-400 line-clamp-2"><?= htmlspecialchars($c['reason']) ?></p><?php endif; ?>
-              <div class="pt-2 border-t border-[#1e2a4a]">
-                <?php if (!empty($c['document'])): ?>
-                  <a href="uploads/justificatifs/<?= htmlspecialchars($c['document']) ?>" target="_blank" class="text-xs text-emerald-400 underline">Voir document</a>
-                <?php else: ?>
-                  <span class="text-xs text-slate-600">Aucun document</span>
-                <?php endif; ?>
-              </div>
+              <div class="text-xs text-slate-400 font-medium"><?= $typeLabel[$c['type']] ?? $c['type'] ?></div>
+              <?php if (!empty($c['reason'])): ?>
+                <p class="text-xs text-slate-400 line-clamp-2 bg-[#0e1726] p-2 rounded border border-[#1e2a4a]/50"><?= htmlspecialchars($c['reason']) ?></p>
+              <?php endif; ?>
             </div>
             <?php endforeach; ?>
           <?php endif; ?>
         </div>
       </div>
+
       <div id="form-absence" style="display:none">
         <div class="card p-6">
-          <h3 class="font-700 text-white mb-2">Nouvelle Demande d'Absence</h3>
-          <p class="text-xs text-slate-400 mb-5">Pour une absence passee (avec justificatif) ou une absence future prevue</p>
+          <h3 class="font-700 text-white mb-2">Nouvelle Demande d'Absence Future</h3>
+          <p class="text-xs text-slate-400 mb-5">Prévoyez et avertissez l'administration de votre indisponibilité à venir.</p>
+          
           <form id="absence-form" class="space-y-4" onsubmit="soumettreAbsence(event)">
             <div>
-              <label class="text-xs text-slate-500 block mb-1">Type de demande *</label>
-              <select id="abs-type-demande" onchange="changerTypeAbsence(this.value)" required>
-                <option value="">Choisir...</option>
-                <option value="absence_passee">Absence passee — je justifie une absence</option>
-                <option value="absence_future">Absence future — je previens a l'avance</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-500 block mb-1" id="abs-date-label">Date de l'absence *</label>
-              <input type="date" id="abs-date" required>
-              <p id="abs-date-hint" class="text-xs text-slate-500 mt-1"></p>
-            </div>
-            <div>
-              <label class="text-xs text-slate-500 block mb-1">Motif *</label>
-              <select id="abs-motif" required>
+              <label class="text-xs text-slate-500 block mb-1">Motif de l'absence *</label>
+              <select id="abs-motif" name="type" required>
                 <option value="">Choisir un motif...</option>
-                <option value="maladie">Maladie</option>
+                <option value="maladie">Maladie / Soins prévus</option>
                 <option value="urgence">Urgence familiale</option>
-                <option value="rendez_vous_medical">Rendez-vous medical</option>
-                <option value="probleme_transport">Probleme de transport</option>
-                <option value="autre">Autre</option>
+                <option value="rendez_vous_medical">Rendez-vous médical</option>
+                <option value="probleme_transport">Problème de transport anticipé</option>
+                <option value="autre">Autre raison</option>
               </select>
             </div>
+
             <div>
-              <label class="text-xs text-slate-500 block mb-1">Details (optionnel)</label>
-              <textarea id="abs-details" rows="3" placeholder="Expliquez les circonstances..."></textarea>
+              <label class="text-xs text-slate-500 block mb-1">Date de l'absence prévue *</label>
+              <input type="date" id="abs-date" name="start_date" min="<?= date('Y-m-d') ?>" required>
+              <p class="text-[11px] text-slate-500 mt-1">Seules les dates d'aujourd'hui et futures sont sélectionnables.</p>
             </div>
-            <div id="abs-document-section" style="display:none">
-              <label class="text-xs text-slate-500 block mb-1">Document justificatif (PDF, JPG, PNG — max 5MB)</label>
-              <input type="file" id="abs-document" accept=".pdf,.jpg,.jpeg,.png">
-              <p class="text-xs text-slate-500 mt-1">Certificat medical, attestation... (optionnel mais recommande)</p>
+
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Détails / Justifications de la demande (optionnel)</label>
+              <textarea id="abs-details" name="reason" rows="3" placeholder="Précisez les circonstances de votre future absence..."></textarea>
             </div>
-            <div id="abs-info-box" style="background:#1a2333;border:1px solid #1e3a5f;border-radius:10px;padding:12px 16px;font-size:13px;color:#60a5fa;display:none"></div>
-            <div class="flex gap-3">
-              <button type="submit" id="abs-submit-btn" class="btn-primary flex-1 py-3" disabled style="opacity:0.5;cursor:not-allowed">Soumettre la demande</button>
+
+            <div class="flex gap-3 pt-2">
+              <button type="submit" id="abs-submit-btn" class="btn-primary flex-1 py-3">Envoyer la demande</button>
               <button type="button" onclick="fermerFormulaireAbsence()" class="btn-secondary py-3 px-6">Annuler</button>
             </div>
           </form>
         </div>
       </div>
     </div>
-
     <!-- ============================================ -->
     <!-- MON PROFIL                                   -->
     <!-- ============================================ -->
@@ -869,6 +953,126 @@ function showToast(msg,type){
   var t=document.createElement('div');t.className='toast';
   t.innerHTML='<span style="color:'+colors[type]+';font-size:16px">'+(type==='success'?'&#10003;':type==='error'?'&#10005;':'&#9432;')+'</span><span style="color:#e2e8f0">'+msg+'</span>';
   document.body.appendChild(t);toastTimeout=setTimeout(function(){t.remove();},3500);
+}
+
+// ============================================
+// LOGIQUE DE LA MODALE JUSTIFIER L'ABSENCE
+// ============================================
+function ouvrirModalJustifier(dateAbsence) {
+  document.getElementById('modal-abs-date').value = dateAbsence;
+  document.getElementById('modal-date-display').textContent = dateAbsence;
+  
+  // Reset le formulaire à l'ouverture
+  document.getElementById('modal-justif-form').reset();
+  
+  var modal = document.getElementById('modal-justifier');
+  modal.classList.remove('hidden');
+}
+
+function fermerModalJustifier() {
+  var modal = document.getElementById('modal-justifier');
+  modal.classList.add('hidden');
+}
+
+function soumettreJustificationModal(e) {
+  e.preventDefault();
+  
+  var date = document.getElementById('modal-abs-date').value;
+  var motif = document.getElementById('modal-abs-motif').value;
+  var details = document.getElementById('modal-abs-details').value;
+  var docFile = document.getElementById('modal-abs-document').files[0];
+  
+  if(!motif) {
+    showToast('Veuillez choisir un motif', 'error');
+    return;
+  }
+  
+  var formData = new FormData();
+  // On mappe les variables attendues par le LeaveController (type, start_date, end_date, etc.)
+  formData.append('type', motif);
+  formData.append('start_date', date);
+  formData.append('end_date', date);
+  formData.append('date_absence', date);
+  formData.append('reason', details);
+  if(docFile) {
+    formData.append('document', docFile);
+  }
+  
+  var btn = document.getElementById('modal-abs-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+  
+  fetch('index.php?route=conges/soumettre', { method: 'POST', body: formData })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if(res.success) {
+      showToast('Justificatif envoyé à l\'administrateur !', 'success');
+      fermerModalJustifier();
+      // Petit rechargement pour rafraîchir l'affichage
+      setTimeout(function() { location.reload(); }, 1500);
+    } else {
+      showToast(res.message || 'Erreur', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Envoyer à l\'admin';
+    }
+  })
+  .catch(function() {
+    showToast('Erreur réseau', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Envoyer à l\'admin';
+  });
+}
+
+function soumettreAbsence(e) {
+  e.preventDefault();
+
+  var motif = document.getElementById('abs-motif').value;
+  var date = document.getElementById('abs-date').value;
+  var details = document.getElementById('abs-details').value;
+
+  if (!motif || !date) {
+    showToast('Veuillez remplir tous les champs obligatoires.', 'error');
+    return;
+  }
+
+  // Préparation des données à envoyer au contrôleur
+  var formData = new FormData();
+  formData.append('type', motif);
+  formData.append('start_date', date);
+  formData.append('end_date', date);
+  formData.append('reason', details);
+  // Pas de paramètre 'date_absence' ici car c'est une absence FUTURE
+
+  var btn = document.getElementById('abs-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  // Envoi des données en AJAX vers le LeaveController
+  fetch('index.php?route=conges/soumettre', { 
+    method: 'POST', 
+    body: formData 
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success) {
+      showToast('Demande d\'absence future envoyée à l\'administrateur !', 'success');
+      fermerFormulaireAbsence();
+      
+      // Rechargement rapide de la page pour mettre à jour la liste
+      setTimeout(function() { 
+        location.reload(); 
+      }, 1500);
+    } else {
+      showToast(res.message || 'Erreur lors de l\'envoi', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Envoyer la demande';
+    }
+  })
+  .catch(function() {
+    showToast('Erreur réseau. Impossible de joindre le serveur.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Envoyer la demande';
+  });
 }
 </script>
 </body>

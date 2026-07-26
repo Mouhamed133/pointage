@@ -4,7 +4,10 @@ FROM dunglas/frankenphp:1-php8.4
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    zip
+    zip \
+    mysql-client \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
 # Installer les extensions PHP
 RUN install-php-extensions \
@@ -13,17 +16,27 @@ RUN install-php-extensions \
     zip \
     mysqli \
     pdo_mysql \
-    exif
+    exif \
+    opcache
 
 # Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+COPY composer.json composer.lock* ./
+
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
+RUN composer dump-autoload --optimize
 
-EXPOSE 80
+# Créer les répertoires nécessaires
+RUN mkdir -p storage/logs storage/exports storage/qrcodes public/uploads/photos public/uploads/justificatifs && \
+    chmod -R 755 storage public
 
-CMD ["frankenphp", "php-server", "--root", "/app/public"]
+EXPOSE 8000
+
+# Pour Railway, le port est défini via la variable d'environnement $PORT
+CMD sh -c "frankenphp php-server --root /app/public --addr 0.0.0.0:${PORT:-8000}"

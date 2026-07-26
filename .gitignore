@@ -1,0 +1,43 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs
+storage/logs/
+*.log
+
+# Uploads
+public/uploads/
+public/uploads/justificatifs/
+public/uploads/photos/
+
+# Generated files
+storage/exports/
+storage/qrcodes/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# My-php-mysql-app (old structure)
+my-php-mysql-app/
+
+# Cache
+.phpunit.result.cache

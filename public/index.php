@@ -1,5 +1,8 @@
 <?php
 
+// Charger les variables d'environnement
+require_once __DIR__ . '/../config/env.php';
+
 require_once __DIR__ . '/../config/Database.php';
 
 session_start();
@@ -7,7 +10,7 @@ session_start();
 $route = $_GET['route'] ?? 'login';
 $route = preg_replace('/[^a-zA-Z0-9_\-\/]/', '', $route);
 
-$pagesPubliques = ['login', 'logout', 'register', 'forgot', 'reset', 'activer', 'scan'];
+$pagesPubliques = ['login', 'logout', 'register', 'forgot', 'reset', 'activer', 'scan', 'health'];
 
 if (!isset($_SESSION['user']) && !in_array($route, $pagesPubliques)) {
     header('Location: index.php?route=login');
@@ -53,9 +56,19 @@ switch ($route) {
         (new AuthController())->activerCompte();
         break;
 
+    case 'health':
+        require_once __DIR__ . '/../app/Controllers/HealthController.php';
+        (new HealthController());
+        break;
+
     case 'profil/modifier':
         require_once __DIR__ . '/../app/Controllers/AuthController.php';
         (new AuthController())->modifierProfil();
+        break;
+
+    case 'profil/photo/supprimer':
+        require_once __DIR__ . '/../app/Controllers/AuthController.php';
+        (new AuthController())->supprimerPhoto();
         break;
 
     case 'logout':
@@ -99,9 +112,6 @@ switch ($route) {
         (new EtudiantController())->regenererQR();
         break;
 
-    // ============================================
-    // PROFIL ETUDIANT — NOUVELLES ROUTES
-    // ============================================
     case 'etudiant/profil/photo':
         require_once __DIR__ . '/../app/Controllers/EtudiantController.php';
         (new EtudiantController())->uploadPhoto();
@@ -139,6 +149,41 @@ switch ($route) {
         require_once __DIR__ . '/../app/Controllers/SchoolQrController.php';
         (new SchoolQrController())->pointer();
         break;
+
+    // ============================================
+    // EMPLOI DU TEMPS (NOUVEAU)
+    // ============================================
+
+    case 'emploidutemps/liste':
+        require_once __DIR__ . '/../app/Controllers/EmploiDuTempsController.php';
+        (new EmploiDuTempsController())->liste();
+        break;
+
+
+    case 'emploidutemps/sauvegarder':
+        require_once __DIR__ . '/../app/Controllers/EmploiDuTempsController.php';
+        (new EmploiDuTempsController())->sauvegarder();
+        break;
+
+
+    case 'emploidutemps/supprimer':
+        require_once __DIR__ . '/../app/Controllers/EmploiDuTempsController.php';
+        (new EmploiDuTempsController())->supprimer();
+        break;
+
+
+    case 'emploidutemps/verifier':
+        require_once __DIR__ . '/../app/Controllers/EmploiDuTempsController.php';
+        (new EmploiDuTempsController())->verifier();
+        break;
+
+
+    // AJOUT POUR CHARGER LES COHORTES DANS LE MODAL
+    case 'cohortes/liste':
+        require_once __DIR__ . '/../app/Controllers/EmploiDuTempsController.php';
+        (new EmploiDuTempsController())->listeCohortes();
+        break;
+
 
     // ============================================
     // RAPPORTS

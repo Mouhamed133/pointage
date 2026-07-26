@@ -45,19 +45,25 @@ class UserController
     // L'admin ne definit plus de mot de passe : l'etudiant recoit un
     // email et choisit lui-meme son mot de passe via le lien d'activation.
     // ============================================
-    public function creer(): void
+  public function creer(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->json(false, 'Methode non autorisee');
             return;
         }
 
-        $nom   = trim($_POST['nom']        ?? '');
-        $email = trim($_POST['email']      ?? '');
-        $dept  = trim($_POST['department'] ?? '');
+        $nom       = trim($_POST['nom']        ?? '');
+        $email     = trim($_POST['email']      ?? '');
+        $dept      = trim($_POST['department'] ?? '');
+        $cohorteId = trim($_POST['cohorte_id'] ?? '');
 
-        if (empty($nom) || empty($email) || empty($dept)) {
-            $this->json(false, 'Tous les champs sont requis');
+        if (empty($nom) || empty($email) || empty($dept) || empty($cohorteId)) {
+            $this->json(false, 'Tous les champs sont requis, y compris la cohorte');
+            return;
+        }
+
+        if (!$this->cohorteExiste($cohorteId)) {
+            $this->json(false, 'Cohorte invalide');
             return;
         }
 
@@ -76,7 +82,7 @@ class UserController
             return;
         }
 
-        $id = $this->userModel->creerInviteParAdmin($nom, $email, $dept);
+        $id = $this->userModel->creerInviteParAdmin($nom, $email, $dept, $cohorteId);
 
         // Genere le token d'activation (reutilise la table password_resets)
         $stmt = $this->db->prepare("DELETE FROM password_resets WHERE email = ?");
@@ -159,7 +165,7 @@ class UserController
     // ============================================
     // MODIFIER UN ETUDIANT (AJAX)
     // ============================================
-    public function modifier(): void
+   public function modifier(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->json(false, 'Methode non autorisee');
@@ -171,11 +177,12 @@ class UserController
             return;
         }
 
-        $id       = trim($_POST['id']         ?? '');
-        $nom      = trim($_POST['nom']        ?? '');
-        $email    = trim($_POST['email']      ?? '');
-        $dept     = trim($_POST['department'] ?? '');
-        $password = $_POST['password']        ?? '';
+        $id        = trim($_POST['id']         ?? '');
+        $nom       = trim($_POST['nom']        ?? '');
+        $email     = trim($_POST['email']      ?? '');
+        $dept      = trim($_POST['department'] ?? '');
+        $cohorteId = trim($_POST['cohorte_id'] ?? '');
+        $password  = $_POST['password']        ?? '';
 
         if (empty($id) || empty($nom) || empty($email)) {
             $this->json(false, 'Nom et email requis');
@@ -187,7 +194,12 @@ class UserController
             return;
         }
 
-        $this->userModel->modifierEtudiant($id, $nom, $email, $dept, $password ?: null);
+        if (!empty($cohorteId) && !$this->cohorteExiste($cohorteId)) {
+            $this->json(false, 'Cohorte invalide');
+            return;
+        }
+
+        $this->userModel->modifierEtudiant($id, $nom, $email, $dept, $password ?: null, $cohorteId ?: null);
 
         $this->logAction('update', 'users', $id);
         $this->json(true, 'Etudiant modifie avec succes');
@@ -554,6 +566,12 @@ class UserController
         }
 
         return checkdnsrr($domaine, 'MX') || checkdnsrr($domaine, 'A');
+    }
+    private function cohorteExiste($cohorteId): bool
+    {
+        $stmt = $this->db->prepare("SELECT id FROM cohortes WHERE id = ?");
+        $stmt->execute([$cohorteId]);
+        return (bool) $stmt->fetch();
     }
 
     private function json(bool $success, string $message, array $data = []): void

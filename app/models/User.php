@@ -70,28 +70,31 @@ class User
     }
 
     /** Liste des etudiants actifs, avec recherche et filtre departement optionnels */
-    public function listeEtudiants(string $search = '', string $dept = ''): array
-    {
-        $sql    = "SELECT id, nom, email, role, department, is_active, created_at FROM users WHERE role = 'etudiant' AND is_active = 1";
-        $params = [];
+  public function listeEtudiants(string $search = '', string $dept = ''): array
+{
+    $sql    = "SELECT u.id, u.nom, u.email, u.role, u.department, u.cohorte_id, c.nom AS cohorte_nom, u.is_active, u.created_at
+               FROM users u
+               LEFT JOIN cohortes c ON c.id = u.cohorte_id
+               WHERE u.role = 'etudiant' AND u.is_active = 1";
+    $params = [];
 
-        if (!empty($search)) {
-            $sql .= " AND (nom LIKE ? OR email LIKE ?)";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-        }
-
-        if (!empty($dept)) {
-            $sql .= " AND department = ?";
-            $params[] = $dept;
-        }
-
-        $sql .= " ORDER BY created_at DESC";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($search)) {
+        $sql .= " AND (u.nom LIKE ? OR u.email LIKE ?)";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
     }
+
+    if (!empty($dept)) {
+        $sql .= " AND u.department = ?";
+        $params[] = $dept;
+    }
+
+    $sql .= " ORDER BY u.created_at DESC";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     /** Comptes etudiants en attente d'approbation (is_active = 0) */
     public function listeEnAttente(): array
@@ -146,20 +149,20 @@ class User
      * par email et choisisse lui-meme son mot de passe (voir activerAvecMotDePasse).
      * Retourne l'id genere.
      */
-    public function creerInviteParAdmin(string $nom, string $email, string $department): string
-    {
-        $id = $this->uuid();
-        // Mot de passe temporaire et inutilisable : remplace a l'activation
-        $hash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+   public function creerInviteParAdmin(string $nom, string $email, string $department, ?string $cohorteId = null): string
+{
+    $id = $this->uuid();
+    // Mot de passe temporaire et inutilisable : remplace a l'activation
+    $hash = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
 
-        $stmt = $this->db->prepare("
-            INSERT INTO users (id, nom, email, password_hash, role, department, is_active)
-            VALUES (?, ?, ?, ?, 'etudiant', ?, 0)
-        ");
-        $stmt->execute([$id, $nom, $email, $hash, $department]);
+    $stmt = $this->db->prepare("
+        INSERT INTO users (id, nom, email, password_hash, role, department, cohorte_id, is_active)
+        VALUES (?, ?, ?, ?, 'etudiant', ?, ?, 0)
+    ");
+    $stmt->execute([$id, $nom, $email, $hash, $department, $cohorteId]);
 
-        return $id;
-    }
+    return $id;
+}
 
     /**
      * Active le compte et definit le mot de passe choisi par l'etudiant
@@ -203,18 +206,17 @@ class User
      * (nom, email, departement, mot de passe optionnel). Utilise par
      * le bouton "Modifier" sur la page Etudiants.
      */
-    public function modifierEtudiant(string $id, string $nom, string $email, string $department, ?string $password = null): bool
-    {
-        if (!empty($password)) {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $this->db->prepare("UPDATE users SET nom = ?, email = ?, department = ?, password_hash = ? WHERE id = ?");
-            return $stmt->execute([$nom, $email, $department, $hash, $id]);
-        }
-
-        $stmt = $this->db->prepare("UPDATE users SET nom = ?, email = ?, department = ? WHERE id = ?");
-        return $stmt->execute([$nom, $email, $department, $id]);
+   public function modifierEtudiant(string $id, string $nom, string $email, string $department, ?string $password = null, ?string $cohorteId = null): bool
+{
+    if (!empty($password)) {
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("UPDATE users SET nom = ?, email = ?, department = ?, cohorte_id = ?, password_hash = ? WHERE id = ?");
+        return $stmt->execute([$nom, $email, $department, $cohorteId, $hash, $id]);
     }
 
+    $stmt = $this->db->prepare("UPDATE users SET nom = ?, email = ?, department = ?, cohorte_id = ? WHERE id = ?");
+    return $stmt->execute([$nom, $email, $department, $cohorteId, $id]);
+}
     /**
      * Met a jour le profil de l'utilisateur connecte (nom + email toujours,
      * mot de passe seulement si fourni). Utilise par la page "Mon Profil".

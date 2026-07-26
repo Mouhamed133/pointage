@@ -87,6 +87,66 @@ class LeaveController
 
         $this->logAction('conge_soumettre', $nomEtudiant, $leaveId);
         $this->json(true, 'Demande soumise avec succes');
+
+       
+            // ============================================================
+            // ENVOI DE L'EMAIL À L'ADMINISTRATEUR
+            // ============================================================
+            $adminEmail = "diopmouhamed101005@gmail.com"; // 👈 Remplace par la vraie adresse email de l'admin
+            
+            // Traduction rapide du type pour le mail
+            $typeLabel = ['maladie'=>'Maladie', 'conge_annuel'=>'Congé', 'urgence'=>'Urgence', 'rendez_vous_medical'=>'Rendez-vous médical', 'probleme_transport'=>'Problème de transport', 'autre'=>'Autre'];
+            $motifText = $typeLabel[$type] ?? $type;
+            
+            // Récupérer le nom de l'étudiant connecté pour que l'admin sache de qui il s'agit
+            $nomEtudiant = $_SESSION['user']['nom'] ?? 'Un étudiant';
+            
+            $sujet = "=?UTF-8?B?".base64_encode("Nouvelle demande d'absence à valider - $nomEtudiant")."?=";
+            
+            $message = "
+            <html>
+            <head>
+              <title>Nouvelle demande d'absence</title>
+            </head>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+              <h2>Bonjour Administrateur,</h2>
+              <p>Une nouvelle demande d'absence a été soumise sur la plateforme.</p>
+              <table style='border-collapse: collapse; width: 100%; max-width: 600px;'>
+                <tr>
+                  <td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>Étudiant :</td>
+                  <td style='padding: 8px; border: 1px solid #ddd;'>$nomEtudiant</td>
+                </tr>
+                <tr>
+                  <td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>Motif :</td>
+                  <td style='padding: 8px; border: 1px solid #ddd;'>$motifText</td>
+                </tr>
+                <tr>
+                  <td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>Date :</td>
+                  <td style='padding: 8px; border: 1px solid #ddd;'>$startDate</td>
+                </tr>
+                <tr>
+                  <td style='padding: 8px; border: 1px solid #ddd; font-weight: bold;'>Détails :</td>
+                  <td style='padding: 8px; border: 1px solid #ddd;'>$reason</td>
+                </tr>
+              </table>
+              <p style='margin-top: 20px;'>
+                <a href='http://tonsite.com/admin/dashboard' style='background-color: #1e3a8a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Accéder à l'espace Admin pour valider</a>
+              </p>
+            </body>
+            </html>
+            ";
+
+            // Headers requis pour envoyer un e-mail au format HTML propre
+            $headers[] = 'MIME-Version: 1.0';
+            $headers[] = 'Content-type: text/html; charset=utf-8';
+            $headers[] = 'From: PointagePro <noreply@tondomaine.com>'; // Nom de ton application
+
+            // Envoi effectif
+            mail($adminEmail, $sujet, $message, implode("\r\n", $headers));
+            // ============================================================
+
+            // Log de l'action pour l'admin (déjà existant dans ton code)
+            $this->logAction($userId, "Soumission demande d'absence/justification pour le $startDate");
     }
 
     public function approuver(): void
@@ -184,4 +244,6 @@ class LeaveController
         echo json_encode(['success' => $success, 'message' => $message, 'data' => $data]);
         exit;
     }
+
+    
 }

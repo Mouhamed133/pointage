@@ -18,7 +18,7 @@ $profilPhotoUrl  = $profilPhoto ? 'uploads/photos/' . htmlspecialchars($profilPh
 // ============================================================
 // DEPARTEMENTS TELLYTECH
 // ============================================================
-$departements = ['Dev','Marketing','Business','Langue','Développement','Data & IA','Bureautique'];
+$departements= ['Dev','Marketing','Business','Langue','Développement','Data & IA','Bureautique'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -185,18 +185,29 @@ $departements = ['Dev','Marketing','Business','Langue','Développement','Data & 
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Audit Log
       </div>
+
+      <div class="nav-item" data-view="parametres">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3.09 13H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82A1.65 1.65 0 0 0 20.91 11H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    Paramètres
+</div>
     </nav>
-    <div class="mt-6">
-      <p class="text-[11px] uppercase tracking-widest text-slate-600 px-3 mb-2">Compte</p>
-      <div class="nav-item" data-view="profil">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Mon Profil
-      </div>
-      <div class="nav-item" style="cursor:pointer" onclick="window.location.href='index.php?route=logout'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Deconnexion
-      </div>
-    </div>
+  <div class="mt-6">
+  <p class="text-[11px] uppercase tracking-widest text-slate-600 px-3 mb-2">Compte</p>
+  
+ 
+  
+  <div class="nav-item" style="cursor:pointer" onclick="window.location.href='index.php?route=logout'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+      <polyline points="16,17 21,12 16,7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Deconnexion
+  </div>
+</div>
   </div>
   <div class="p-4 border-t border-[#1e2a4a]">
     <div class="flex items-center gap-3">
@@ -302,7 +313,7 @@ $departements = ['Dev','Marketing','Business','Langue','Développement','Data & 
         <input type="date" id="filter-date" class="w-auto" value="<?= date('Y-m-d') ?>" onchange="chargerPresences()">
         <select id="filter-dept" class="w-auto" onchange="chargerPresences()">
           <option value="">Tous departements</option>
-          <?php foreach($departements as $d): ?><option><?= htmlspecialchars($d) ?></option><?php endforeach; ?>
+          <?php foreach($cohortes as $d): ?><option><?= htmlspecialchars($d) ?></option><?php endforeach; ?>
         </select>
         <select id="filter-statut" class="w-auto" onchange="chargerPresences()">
           <option value="">Tous statuts</option>
@@ -421,7 +432,7 @@ $departements = ['Dev','Marketing','Business','Langue','Développement','Data & 
 
     <!-- QR CODE ECOLE -->
     <div id="view-qrecole" class="view">
-      <div class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+     <div class="max-w-xl mx-auto">
         <div class="card p-4 text-center">
           <div class="w-12 h-12 bg-emerald-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3"><svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" class="w-6 h-6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
           <h2 class="font-700 text-white text-lg mb-1">QR Code de l'Etablissement</h2>
@@ -435,16 +446,7 @@ $departements = ['Dev','Marketing','Business','Langue','Développement','Data & 
             <button onclick="regenererQrEcole()" class="btn-danger flex-1 py-2.5 text-sm">Regenerer QR</button>
           </div>
         </div>
-        <div class="card p-5">
-          <p class="font-600 text-white mb-1">Configuration GPS</p>
-          <p class="text-xs text-slate-500 mb-4">Position et perimetre autorise pour le pointage des etudiants</p>
-          <div class="space-y-3">
-            <div><label class="text-xs text-slate-500 block mb-1">Latitude</label><input type="text" id="config-latitude"></div>
-            <div><label class="text-xs text-slate-500 block mb-1">Longitude</label><input type="text" id="config-longitude"></div>
-            <div><label class="text-xs text-slate-500 block mb-1">Rayon autorise (metres)</label><input type="number" id="config-rayon"></div>
-            <button onclick="enregistrerConfigGps()" class="btn-primary w-full py-2.5">Enregistrer la position</button>
-          </div>
-        </div>
+       
       </div>
     </div>
 
@@ -471,6 +473,87 @@ $departements = ['Dev','Marketing','Business','Langue','Développement','Data & 
       </div>
     </div>
 
+
+    <!-- PARAMETRES -->
+<div id="view-parametres" class="view">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Mon Profil -->
+        <div class="card p-6 cursor-pointer hover:border-emerald-500 transition"
+             onclick="switchView('profil')">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-12 h-12 rounded-xl bg-emerald-900 flex items-center justify-center">
+                    👤
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-white">
+                        Mon Profil
+                    </h3>
+
+                    <p class="text-slate-400 text-sm">
+                        Modifier vos informations personnelles et votre mot de passe.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- GPS -->
+        <div class="card p-6 cursor-pointer hover:border-blue-500 transition"
+             onclick="switchView('gps')">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-12 h-12 rounded-xl bg-blue-900 flex items-center justify-center">
+                    📍
+                </div>
+
+                <div>
+
+                    <h3 class="text-lg font-bold text-white">
+                        Configuration GPS
+                    </h3>
+
+                    <p class="text-slate-400 text-sm">
+                        Modifier la position GPS et le rayon autorisé.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card p-6 cursor-pointer hover:shadow-lg transition"
+     onclick="switchView('emploidutemps')">
+    <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+        </div>
+
+        <div>
+            <h3 class="font-semibold text-lg">Emploi du Temps</h3>
+            <p class="text-sm text-gray-500">
+                Gérer les horaires de cours des étudiants.
+            </p>
+        </div>
+    </div>
+</div>
+
+    </div>
+
+</div>
     <!-- ============================================================ -->
     <!-- PROFIL — photo + telephone + mot de passe avec confirmation  -->
     <!-- ============================================================ -->
@@ -555,18 +638,121 @@ $departements = ['Dev','Marketing','Business','Langue','Développement','Data & 
         </div>
       </div>
     </div>
+    <!-- CONFIGURATION GPS -->
+<div id="view-gps" class="view">
 
+    <div class="max-w-xl">
+
+        <div class="card p-6">
+
+            <h2 class="text-xl font-bold text-white mb-2">
+                Configuration GPS
+            </h2>
+
+            <p class="text-slate-400 mb-6">
+                Position autorisée pour le pointage des étudiants.
+            </p>
+
+            <div class="space-y-4">
+
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">
+                        Latitude
+                    </label>
+
+                    <input type="text" id="config-latitude">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">
+                        Longitude
+                    </label>
+
+                    <input type="text" id="config-longitude">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">
+                        Rayon autorisé (mètres)
+                    </label>
+
+                    <input type="number" id="config-rayon">
+                </div>
+
+                <button
+                    onclick="enregistrerConfigGps()"
+                    class="btn-primary w-full">
+                    Enregistrer la position
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="view-emploidutemps" class="view">
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">Gestion des Emplois du Temps</h2>
+
+            <button class="btn btn-primary"
+                    onclick="ouvrirModalEmploi()">
+                + Nouvel emploi du temps
+            </button>
+        </div>
+
+        <div id="liste-emplois">
+            <p class="text-slate-500 text-center py-8">
+                Chargement...
+            </p>
+        </div>
+    </div>
+</div>
   </div>
 </div>
+<!-- MODAL EMPLOI DU TEMPS -->
+
 
 <div id="modal-bg" class="modal-bg hidden" onclick="if(event.target.id==='modal-bg')closeModal()">
   <div id="modal-content" class="modal"></div>
 </div>
 
+
+
 <script>
-var DEPARTEMENTS = <?= json_encode($departements) ?>;
+  
+var DEPARTEMENTS = <?= json_encode(array_map(function($d){ return ['id'=>$d,'nom'=>$d]; }, $departements)) ?>;
+
 function deptOptions(selected){
-  return DEPARTEMENTS.map(function(d){return'<option value="'+d+'"'+(d===selected?' selected':'')+'>'+d+'</option>';}).join('');
+    return DEPARTEMENTS.map(function(c){
+        return `
+            <option value="${c.id}" ${parseInt(selected)==parseInt(c.id) ? 'selected' : ''}>
+                ${c.nom}
+            </option>
+        `;
+    }).join('');
+}
+function chargerCohortesPourSelect(selectId, selected){
+  fetch('index.php?route=cohortes/liste')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var select = document.getElementById(selectId);
+      if(!select) return;
+      select.innerHTML = '<option value="">Choisir une cohorte</option>';
+      if(res.data){
+        res.data.forEach(function(c){
+          var sel = (selected && String(selected) === String(c.id)) ? 'selected' : '';
+          select.innerHTML += '<option value="'+c.id+'" '+sel+'>'+c.nom+'</option>';
+        });
+      }
+    })
+    .catch(function(){
+      var select = document.getElementById(selectId);
+      if(select) select.innerHTML = '<option value="">Erreur chargement cohortes</option>';
+    });
 }
 
 var phpStats=<?= $statsData ?>,phpPointages=<?= $pointagesData ?>;
@@ -586,7 +772,7 @@ function switchView(name){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var v=document.getElementById('view-'+name);if(v)v.classList.add('active');
   var n=document.querySelector('[data-view="'+name+'"]');if(n)n.classList.add('active');
-  var titles={dashboard:'Tableau de bord',pointage:'Pointage QR Code',presences:'Presences',etudiants:'Etudiants',validation:'Invitations en attente',conges:'Gestion Absences',rapports:'Rapports',qrecole:'QR Code Ecole',audit:'Audit Log',profil:'Mon Profil'};
+  var titles={dashboard:'Tableau de bord',pointage:'Pointage QR Code',presences:'Presences',etudiants:'Etudiants',validation:'Invitations en attente',conges:'Gestion Absences',rapports:'Rapports',qrecole:'QR Code Ecole',audit:'Audit Log',parametres: 'Paramètres',gps: 'Configuration GPS',profil:'Mon Profil',  emploidutemps:"Emploi du Temps"};
   document.getElementById('page-title').textContent=titles[name]||'';
   if(name==='rapports')renderMonthlyChart();
   if(name==='etudiants')chargerEtudiants();
@@ -596,6 +782,9 @@ function switchView(name){
   if(name==='qrecole')chargerQrEcole();
   if(name==='audit'){chargerAudit();if(auditAutoRefresh)clearInterval(auditAutoRefresh);auditAutoRefresh=setInterval(chargerAudit,30*60*1000);}
   else if(auditAutoRefresh){clearInterval(auditAutoRefresh);auditAutoRefresh=null;}
+ if (name === 'emploidutemps') {
+    chargerEmploisDuTemps();
+}
 }
 document.getElementById('main-nav').addEventListener('click',function(e){var i=e.target.closest('[data-view]');if(i)switchView(i.dataset.view);});
 function getInitials(name){if(!name)return'??';return name.split(' ').map(function(n){return n[0];}).join('').toUpperCase().slice(0,2);}
@@ -637,8 +826,51 @@ function _renderPresences(){var grid=document.getElementById('presences-tbody'),
 
 function chargerEtudiants(){var search=document.getElementById('search-etu')?document.getElementById('search-etu').value:'';fetch('index.php?route=etudiants/liste&search='+encodeURIComponent(search)).then(function(r){return r.json();}).then(function(res){var grid=document.getElementById('etudiants-grid');if(!res.success||res.data.length===0){grid.innerHTML='<p class="text-slate-500 text-sm col-span-3 text-center py-8">Aucun etudiant</p>';return;}res.data.forEach(function(e){var eid=e.id||'';if(eid)_etudiants_cache[eid]=e;});grid.innerHTML=res.data.map(function(e){var eid=e.id||'';return'<div class="card p-5"><div class="flex items-start justify-between mb-3"><div class="flex items-center gap-3"><div class="avatar w-10 h-10 bg-emerald-900 text-emerald-300" style="width:40px;height:40px;font-size:13px">'+getInitials(e.nom)+'</div><div><p class="font-600 text-white text-sm">'+e.nom+'</p><p class="text-xs text-slate-400">'+e.department+'</p></div></div><span class="text-xs badge-present px-2 py-0.5 rounded-full">Etudiant</span></div><div class="text-xs text-slate-400 border-t border-[#1e2a4a] pt-3 space-y-1"><p>'+e.email+'</p><p class="mono text-emerald-600 text-[10px]">'+(e.qr_token?'QR: '+e.qr_token.slice(0,16)+'...':'Pas de QR')+'</p></div><div class="flex gap-2 mt-3"><button class="btn-secondary text-xs px-2 py-1.5 etu-btn-qr" data-id="'+eid+'">QR</button><button class="btn-primary text-xs px-2 py-1.5 flex-1 etu-btn-modifier" data-id="'+eid+'">Modifier</button><button class="btn-icon-danger etu-btn-supprimer" data-id="'+eid+'" title="Desactiver">&#x1F5D1;</button></div></div>';}).join('');var grid2=document.getElementById('etudiants-grid');grid2.onclick=function(ev){var btn=ev.target.closest('button');if(!btn)return;var id=btn.getAttribute('data-id');if(!id)return;if(btn.classList.contains('etu-btn-modifier'))modifierEtudiant(id);if(btn.classList.contains('etu-btn-supprimer'))desactiverEtudiant(id);if(btn.classList.contains('etu-btn-qr'))voirQR(id);};}).catch(function(){showToast('Erreur chargement','error');});}
 function creerEtudiant(){var nom=document.getElementById('etu-nom').value.trim();var email=document.getElementById('etu-email').value.trim();var dept=document.getElementById('etu-dept').value;if(!nom||!email||!dept){showToast('Tous les champs sont requis','error');return;}fetch('index.php?route=etudiants/creer',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'nom='+encodeURIComponent(nom)+'&email='+encodeURIComponent(email)+'&department='+encodeURIComponent(dept)}).then(function(r){return r.json();}).then(function(res){showToast(res.message,res.success?'success':'error');if(res.success){closeModal();chargerEtudiants();}}).catch(function(){showToast('Erreur reseau','error');});}
-function modifierEtudiant(id){var e=_etudiants_cache[id];if(!e){showToast('Etudiant introuvable','error');return;}document.getElementById('modal-bg').classList.remove('hidden');var modal=document.getElementById('modal-content');modal.innerHTML='<h2 class="text-lg font-700 text-white mb-5">Modifier Etudiant</h2><div class="space-y-4"><div><label class="text-xs text-slate-500 block mb-1">Nom complet</label><input type="text" id="edit-nom"></div><div><label class="text-xs text-slate-500 block mb-1">Email</label><input type="email" id="edit-email"></div><div><label class="text-xs text-slate-500 block mb-1">Departement</label><select id="edit-dept">'+deptOptions(e.department||'')+'</select></div><div><label class="text-xs text-slate-500 block mb-1">Nouveau mot de passe <span class="text-slate-600">(laisser vide)</span></label><input type="password" id="edit-password" placeholder="..."></div></div><div class="flex gap-3 mt-6"><button class="btn-primary flex-1 py-2.5" id="btn-sauvegarder-etu">Sauvegarder</button><button class="btn-secondary" onclick="closeModal()">Annuler</button></div>';document.getElementById('edit-nom').value=e.nom||'';document.getElementById('edit-email').value=e.email||'';document.getElementById('btn-sauvegarder-etu').onclick=function(){sauvegarderEtudiant(id);};}
-function sauvegarderEtudiant(id){var nom=document.getElementById('edit-nom').value.trim();var email=document.getElementById('edit-email').value.trim();var dept=document.getElementById('edit-dept').value;var password=document.getElementById('edit-password').value;if(!nom||!email){showToast('Nom et email requis','error');return;}fetch('index.php?route=etudiants/modifier',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+encodeURIComponent(id)+'&nom='+encodeURIComponent(nom)+'&email='+encodeURIComponent(email)+'&department='+encodeURIComponent(dept)+'&password='+encodeURIComponent(password)}).then(function(r){return r.json();}).then(function(res){showToast(res.message,res.success?'success':'error');if(res.success){closeModal();chargerEtudiants();}}).catch(function(){showToast('Erreur reseau','error');});}
+function modifierEtudiant(id){
+  var e = _etudiants_cache[id];
+  if(!e){ showToast('Etudiant introuvable','error'); return; }
+  document.getElementById('modal-bg').classList.remove('hidden');
+  var modal = document.getElementById('modal-content');
+  modal.innerHTML = `
+    <h2 class="text-lg font-700 text-white mb-5">Modifier Etudiant</h2>
+    <div class="space-y-4">
+      <div><label class="text-xs text-slate-500 block mb-1">Nom complet</label><input type="text" id="edit-nom"></div>
+      <div><label class="text-xs text-slate-500 block mb-1">Email</label><input type="email" id="edit-email"></div>
+      <div><label class="text-xs text-slate-500 block mb-1">Departement</label><select id="edit-dept">${deptOptions(e.department||'')}</select></div>
+      <div><label class="text-xs text-slate-500 block mb-1">Cohorte</label><select id="edit-cohorte"><option value="">Chargement...</option></select></div>
+      <div><label class="text-xs text-slate-500 block mb-1">Nouveau mot de passe <span class="text-slate-600">(laisser vide)</span></label><input type="password" id="edit-password" placeholder="..."></div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button class="btn-primary flex-1 py-2.5" id="btn-sauvegarder-etu">Sauvegarder</button>
+      <button class="btn-secondary" onclick="closeModal()">Annuler</button>
+    </div>
+  `;
+  document.getElementById('edit-nom').value = e.nom || '';
+  document.getElementById('edit-email').value = e.email || '';
+  chargerCohortesPourSelect('edit-cohorte', e.cohorte_id);
+  document.getElementById('btn-sauvegarder-etu').onclick = function(){ sauvegarderEtudiant(id); };
+}
+function sauvegarderEtudiant(id){
+  var nom = document.getElementById('edit-nom').value.trim();
+  var email = document.getElementById('edit-email').value.trim();
+  var dept = document.getElementById('edit-dept').value;
+  var cohorteId = document.getElementById('edit-cohorte').value;
+  var password = document.getElementById('edit-password').value;
+
+  if(!nom || !email){ showToast('Nom et email requis','error'); return; }
+
+  fetch('index.php?route=etudiants/modifier',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'id='+encodeURIComponent(id)+'&nom='+encodeURIComponent(nom)+'&email='+encodeURIComponent(email)+'&department='+encodeURIComponent(dept)+'&cohorte_id='+encodeURIComponent(cohorteId)+'&password='+encodeURIComponent(password)
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    showToast(res.message,res.success?'success':'error');
+    if(res.success){closeModal();chargerEtudiants();}
+  })
+  .catch(function(){showToast('Erreur reseau','error');});
+}
 function desactiverEtudiant(id){var e=_etudiants_cache[id];var nom=e?e.nom:'cet etudiant';showConfirm('Desactiver '+nom+' ?','Le compte sera desactive. L\'etudiant ne pourra plus se connecter ni pointer.','Desactiver',function(){fetch('index.php?route=etudiants/supprimer',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+encodeURIComponent(id)}).then(function(r){return r.json();}).then(function(res){showToast(res.message,res.success?'success':'error');if(res.success)chargerEtudiants();});});}
 function voirQR(id){var e=_etudiants_cache[id];var nom=e?e.nom:'';var token=e?e.qr_token||'':'';document.getElementById('modal-bg').classList.remove('hidden');var btnCopier=token?'<button class="btn-primary flex-1 py-2.5" id="btn-copier-token">Copier le token</button>':'';document.getElementById('modal-content').innerHTML='<h2 class="text-lg font-700 text-white mb-2">QR Code</h2><p class="text-slate-400 text-sm mb-4">Scannez ce QR Code pour pointer</p><div class="bg-[#0a0e1a] rounded-xl p-6 text-center border border-[#1e2a4a] mb-4"><div id="qrcode-display" class="inline-block p-3 bg-white rounded-xl mb-3"></div><p class="mono text-xs text-slate-300 break-all px-2 mt-2" id="qr-token-display">'+(token||'Aucun token')+'</p></div><div class="flex gap-3">'+btnCopier+'<button class="btn-secondary py-2.5 flex-1" onclick="closeModal()">Fermer</button></div>';if(token){document.getElementById('btn-copier-token').addEventListener('click',function(){navigator.clipboard.writeText(token).then(function(){showToast('Token copie !','success');}).catch(function(){showToast('Erreur copie','error');});});setTimeout(function(){var container=document.getElementById('qrcode-display');if(container&&token){new QRCode(container,{text:token,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}},100);}}
 
@@ -833,8 +1065,38 @@ function chargerValidation(){fetch('index.php?route=validation/liste').then(func
 function validationPage(dir){if(!window.validPage)window.validPage=1;window.validPage+=dir;if(window.validPage<1)window.validPage=1;chargerValidation();}
 function renvoyerInvitation(id,nom){fetch('index.php?route=validation/renvoyer',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+encodeURIComponent(id)}).then(function(r){return r.json();}).then(function(res){showToast(res.message,res.success?'success':'error');});}
 function refuserCompte(id,nom){showConfirm('Annuler l\'invitation de '+nom+' ?','L\'invitation sera supprimee definitivement.','Annuler l\'invitation',function(){fetch('index.php?route=validation/refuser',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+encodeURIComponent(id)}).then(function(r){return r.json();}).then(function(res){showToast(res.success?'Invitation annulee':res.message,res.success?'success':'error');if(res.success)chargerValidation();});});}
-
-function openModal(name){document.getElementById('modal-bg').classList.remove('hidden');document.getElementById('modal-content').innerHTML='<h2 class="text-lg font-700 text-white mb-2">Ajouter un Etudiant</h2><p class="text-xs text-slate-500 mb-5">Un email d\'invitation lui sera envoye pour qu\'il/elle choisisse son propre mot de passe.</p><div class="space-y-4"><div><label class="text-xs text-slate-500 block mb-1">Nom complet</label><input type="text" id="etu-nom" placeholder="Moussa Diallo"></div><div><label class="text-xs text-slate-500 block mb-1">Email</label><input type="email" id="etu-email" placeholder="etudiant@ecole.sn"></div><div><label class="text-xs text-slate-500 block mb-1">Departement</label><select id="etu-dept">'+deptOptions('')+'</select></div></div><div class="flex gap-3 mt-6"><button class="btn-primary flex-1 py-2.5" onclick="creerEtudiant()">Envoyer l\'invitation</button><button class="btn-secondary" onclick="closeModal()">Annuler</button></div>';}
+function openModal(name){
+  document.getElementById('modal-bg').classList.remove('hidden');
+  document.getElementById('modal-content').innerHTML = `
+    <h2 class="text-lg font-700 text-white mb-2">Ajouter un Etudiant</h2>
+    <p class="text-xs text-slate-500 mb-5">Un email d'invitation lui sera envoyé pour qu'il/elle choisisse son propre mot de passe.</p>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs text-slate-500 block mb-1">Nom complet</label>
+        <input type="text" id="etu-nom" placeholder="Moussa Diallo">
+      </div>
+      <div>
+        <label class="text-xs text-slate-500 block mb-1">Email</label>
+        <input type="email" id="etu-email" placeholder="etudiant@ecole.sn">
+      </div>
+      <div>
+        <label class="text-xs text-slate-500 block mb-1">Département</label>
+        <select id="etu-dept">${deptOptions('')}</select>
+      </div>
+      <div>
+        <label class="text-xs text-slate-500 block mb-1">Cohorte</label>
+        <select id="etu-cohorte">
+          <option value="">Chargement des cohortes...</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button class="btn-primary flex-1 py-2.5" onclick="creerEtudiant()">Envoyer l'invitation</button>
+      <button class="btn-secondary" onclick="closeModal()">Annuler</button>
+    </div>
+  `;
+  chargerCohortesPourSelect('etu-cohorte');
+}
 function closeModal(){document.getElementById('modal-bg').classList.add('hidden');}
 function openModalImport(){document.getElementById('modal-bg').classList.remove('hidden');document.getElementById('modal-content').innerHTML='<h2 class="text-lg font-700 text-white mb-2">Importer des etudiants</h2><p class="text-xs text-slate-500 mb-1">Chaque etudiant valide recevra un email d\'invitation pour activer son compte.</p><a href="index.php?route=etudiants/modele" class="text-xs text-emerald-400 underline inline-block mb-4">Telecharger le modele Excel</a><div><label class="text-xs text-slate-500 block mb-1">Fichier Excel (.xlsx)</label><input type="file" id="import-fichier" accept=".xlsx,.xls"></div><div id="import-resultat" class="mt-3"></div><div class="flex gap-3 mt-6"><button class="btn-primary flex-1 py-2.5" id="btn-import" onclick="importerEtudiants()">Importer</button><button class="btn-secondary" onclick="closeModal()">Fermer</button></div>';}
 function importerEtudiants(){var input=document.getElementById('import-fichier');if(!input.files||!input.files[0]){showToast('Selectionnez un fichier Excel','error');return;}var btn=document.getElementById('btn-import');btn.disabled=true;btn.textContent='Import en cours...';var formData=new FormData();formData.append('fichier',input.files[0]);fetch('index.php?route=etudiants/importer',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(res){btn.disabled=false;btn.textContent='Importer';var zone=document.getElementById('import-resultat');var html='<div class="text-xs '+(res.success?'text-emerald-400':'text-red-400')+' font-600 mb-2">'+res.message+'</div>';if(res.data&&res.data.reussis&&res.data.reussis.length){html+='<div class="bg-[#0a0e1a] rounded-lg p-3 mb-2 max-h-32 overflow-y-auto"><p class="text-xs text-emerald-400 font-600 mb-1">Importes :</p>'+res.data.reussis.map(function(r){return'<p class="text-xs text-slate-400">'+r+'</p>';}).join('')+'</div>';}if(res.data&&res.data.erreurs&&res.data.erreurs.length){html+='<div class="bg-[#0a0e1a] rounded-lg p-3 max-h-32 overflow-y-auto"><p class="text-xs text-red-400 font-600 mb-1">Erreurs :</p>'+res.data.erreurs.map(function(e){return'<p class="text-xs text-slate-400">'+e+'</p>';}).join('')+'</div>';}zone.innerHTML=html;showToast(res.message,res.success?'success':'error');chargerEtudiants();}).catch(function(){btn.disabled=false;btn.textContent='Importer';showToast('Erreur reseau','error');});}
@@ -874,7 +1136,6 @@ function indicateurForce(val,barId,labelId,containerId){
   var n=niv[Math.min(score,4)];
   b.style.width=n.p;b.style.background=n.bg;l.style.color=n.bg;l.textContent=n.t;
 }
-
 function sauvegarderProfil(){
   var nom=document.getElementById('profil-nom').value.trim();
   var email=document.getElementById('profil-email').value.trim();
@@ -905,23 +1166,14 @@ function sauvegarderProfil(){
       if(document.getElementById('profil-force-container'))document.getElementById('profil-force-container').style.display='none';
       if(photoInp)photoInp.value='';
       if(res.data&&res.data.nom){var el=document.getElementById('profil-nom-affiche');if(el)el.textContent=res.data.nom;}
-    }
-  })
-  .catch(function(){showToast('Erreur réseau','error');});
-}
-
-function supprimerPhoto(){
-  if(!confirm('Supprimer votre photo de profil ?'))return;
-  var fd=new FormData();
-  fetch('index.php?route=profil/photo/supprimer',{method:'POST',body:fd})
-  .then(function(r){return r.json();})
-  .then(function(res){
-    showToast(res.message,res.success?'success':'error');
-    if(res.success){
-      var initiales=document.getElementById('profil-nom').value.slice(0,2).toUpperCase();
-      var c=document.getElementById('profil-avatar-container');
-      c.innerHTML='<span style="font-size:28px;font-weight:700;color:#34d399;">'+initiales+'</span>';
-      var btn=document.getElementById('btn-suppr-photo');if(btn)btn.style.display='none';
+      
+      // ============================================================
+      // RETOUR AUTOMATIQUE AU TABLEAU DE BORD APRÈS SAUVEGARDE
+      // ============================================================
+      if(typeof switchView === "function") {
+          switchView('dashboard');
+      }
+      // ============================================================
     }
   })
   .catch(function(){showToast('Erreur réseau','error');});
@@ -947,6 +1199,282 @@ document.addEventListener('DOMContentLoaded',function(){
   var selM=document.getElementById('rapport-mois-mois');var selA=document.getElementById('rapport-mois-annee');
   if(selM)selM.value=mm;if(selA)selA.value=yyyy;
 });
+// ============================================================
+// EMPLOI DU TEMPS
+// ============================================================
+
+var _emplois_cache = {};
+
+function chargerEmploisDuTemps(){
+
+    var container = document.getElementById('liste-emplois');
+    if(!container){ return; }
+
+    container.innerHTML = `<div class="text-center text-slate-500 py-8">Chargement de l'emploi du temps...</div>`;
+
+    fetch('index.php?route=emploidutemps/liste')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+
+        if(!res.success || !res.data || res.data.length===0){
+            container.innerHTML = `<p class="text-slate-500 text-center py-8">Aucun emploi du temps disponible</p>`;
+            return;
+        }
+
+        res.data.forEach(function(e){ _emplois_cache[e.id] = e; });
+
+        container.innerHTML = res.data.map(function(e){
+            return `
+                <div class="card p-4 mb-3 flex items-center justify-between">
+                    <div>
+                        <span class="text-white font-600">${e.cohorte_nom || 'Cohorte supprimée'}</span>
+                        <p class="text-slate-400 mt-1 text-sm">${e.jour} — <span class="text-emerald-400">${e.heure_debut} - ${e.heure_fin}</span></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn-secondary text-xs px-3 py-1.5" onclick="modifierEmploi('${e.id}')">Modifier</button>
+                        <button class="btn-icon-danger" onclick="supprimerEmploi('${e.id}')" title="Supprimer">&#x1F5D1;</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    })
+    .catch(function(){
+        container.innerHTML = `<p class="text-red-400 text-center">Erreur chargement emploi du temps</p>`;
+    });
+}
+
+function modifierEmploi(id){
+    var e = _emplois_cache[id];
+    if(!e){ showToast('Créneau introuvable','error'); return; }
+
+    ouvrirModalEmploi(); // ouvre le modal et charge les cohortes
+
+    // Pré-remplir une fois les cohortes chargées
+    setTimeout(function(){
+        var selCohorte = document.getElementById('emploi-cohorte');
+        var selJour = document.getElementById('emploi-jour');
+        var inpDebut = document.getElementById('emploi-debut');
+        var inpFin = document.getElementById('emploi-fin');
+        if(selCohorte) selCohorte.value = e.cohorte_id;
+        if(selJour) selJour.value = e.jour;
+        if(inpDebut) inpDebut.value = e.heure_debut ? e.heure_debut.slice(0,5) : '';
+        if(inpFin) inpFin.value = e.heure_fin ? e.heure_fin.slice(0,5) : '';
+    }, 400);
+}
+
+function supprimerEmploi(id){
+    showConfirm('Supprimer ce créneau ?','Cette action est irréversible.','Supprimer',function(){
+        fetch('index.php?route=emploidutemps/supprimer',{
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body:'id='+encodeURIComponent(id)
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            showToast(res.message, res.success ? 'success' : 'error');
+            if(res.success) chargerEmploisDuTemps();
+        })
+        .catch(function(){ showToast('Erreur réseau','error'); });
+    });
+}
+function ouvrirModalEmploi(){
+
+    document.getElementById('modal-content').innerHTML = `
+
+    <h2 class="text-xl font-bold text-white mb-4">
+        Ajouter un créneau
+    </h2>
+
+    <label class="text-sm text-slate-400">
+        Cohorte
+    </label>
+
+    <select id="emploi-cohorte" class="w-full mb-3">
+
+        <option value="">
+            Chargement des cohortes...
+        </option>
+
+    </select>
+
+
+    <label class="text-sm text-slate-400">
+        Jour
+    </label>
+
+    <select id="emploi-jour" class="w-full mb-3">
+
+        <option value="lundi">Lundi</option>
+        <option value="mardi">Mardi</option>
+        <option value="mercredi">Mercredi</option>
+        <option value="jeudi">Jeudi</option>
+        <option value="vendredi">Vendredi</option>
+
+    </select>
+
+
+    <label class="text-sm text-slate-400">
+        Horaire
+    </label>
+
+    <div class="flex gap-2">
+
+        <input type="time" id="emploi-debut">
+
+        <input type="time" id="emploi-fin">
+
+    </div>
+
+
+    <button onclick="sauvegarderEmploi()" 
+        class="btn-primary mt-4 w-full">
+        Enregistrer
+    </button>
+
+    `;
+
+
+    document.getElementById('modal-bg')
+    .classList.remove('hidden');
+
+
+    chargerCohortes();
+}
+
+function chargerCohortes(){
+
+    console.log("Chargement cohortes...");
+
+    fetch('index.php?route=cohortes/liste')
+    .then(response => response.json())
+    .then(result => {
+
+        console.log("Réponse :", result);
+
+        const select = document.getElementById('emploi-cohorte');
+
+        if(!select){
+            console.error("Select emploi-cohorte introuvable");
+            return;
+        }
+
+        select.innerHTML = `
+            <option value="">
+                Choisir une cohorte
+            </option>
+        `;
+
+        result.data.forEach(cohorte => {
+            select.innerHTML += `
+                <option value="${cohorte.id}">
+                    ${cohorte.nom}
+                </option>
+            `;
+        });
+
+        console.log("Cohortes chargées avec succès");
+
+    })
+    .catch(error => {
+        console.error("Erreur chargement cohortes :", error);
+    });
+
+}
+function chargerCohortesPourSelect(selectId, selected){
+  fetch('index.php?route=cohortes/liste')
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var select = document.getElementById(selectId);
+      if(!select) return;
+      select.innerHTML = '<option value="">Choisir une cohorte</option>';
+      if(res.data){
+        res.data.forEach(function(c){
+          var sel = (selected && parseInt(selected) === parseInt(c.id)) ? 'selected' : '';
+          select.innerHTML += '<option value="'+c.id+'" '+sel+'>'+c.nom+'</option>';
+        });
+      }
+    })
+    .catch(function(){
+      var select = document.getElementById(selectId);
+      if(select) select.innerHTML = '<option value="">Erreur chargement</option>';
+    });
+}
+function creerEtudiant(){
+  var nom = document.getElementById('etu-nom').value.trim();
+  var email = document.getElementById('etu-email').value.trim();
+  var dept = document.getElementById('etu-dept').value;
+  var cohorteId = document.getElementById('etu-cohorte').value;
+
+  if(!nom || !email || !dept){
+    showToast('Tous les champs sont requis','error');
+    return;
+  }
+  if(!cohorteId){
+    showToast('Veuillez choisir une cohorte','error');
+    return;
+  }
+
+  fetch('index.php?route=etudiants/creer',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'nom='+encodeURIComponent(nom)+'&email='+encodeURIComponent(email)+'&department='+encodeURIComponent(dept)+'&cohorte_id='+encodeURIComponent(cohorteId)
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    showToast(res.message,res.success?'success':'error');
+    if(res.success){closeModal();chargerEtudiants();}
+  })
+  .catch(function(){showToast('Erreur reseau','error');});
+}
+function sauvegarderEmploi(){
+
+    let data = new FormData();
+
+    data.append(
+        'cohorte_id',
+        document.getElementById('emploi-cohorte').value
+    );
+
+    data.append(
+        'jour',
+        document.getElementById('emploi-jour').value
+    );
+
+    data.append(
+        'heure_debut',
+        document.getElementById('emploi-debut').value
+    );
+
+    data.append(
+        'heure_fin',
+        document.getElementById('emploi-fin').value
+    );
+
+
+    fetch('index.php?route=emploidutemps/sauvegarder',{
+        method:'POST',
+        body:data
+    })
+
+    .then(res=>res.json())
+
+    .then(result=>{
+
+        alert(result.message);
+
+       if(result.success){
+
+    closeModal();
+
+    chargerEmploisDuTemps();
+
+}
+
+    });
+
+}
+
 </script>
 </body>
 </html>

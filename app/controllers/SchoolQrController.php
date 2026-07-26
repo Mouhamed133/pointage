@@ -146,7 +146,7 @@ class SchoolQrController
         $stmt   = $this->db->query("SELECT latitude, longitude, rayon, label FROM school_qr WHERE is_active = 1 LIMIT 1");
         $config = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$config) {
-            $config = ['latitude' => 14.6796200, 'longitude' => -17.4412290, 'rayon' => 500, 'label' => 'Entree principale'];
+            $config = ['latitude' => 14.721736, 'longitude' => -17.463802, 'rayon' => 10, 'label' => 'Entree principale'];
         }
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'data' => $config]);

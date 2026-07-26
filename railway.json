@@ -1,0 +1,15 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "env": {
+    "PHP_PORT": {
+      "description": "Le port sur lequel le serveur PHP écoute",
+      "value": "8000"
+    }
+  },
+  "deploy": {
+    "startCommand": "frankenphp php-server --root /app/public --addr 0.0.0.0:$PORT"
+  }
+}

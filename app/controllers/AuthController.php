@@ -55,6 +55,7 @@ class AuthController
                         'email'      => $user['email'],
                         'role'       => $user['role'],
                         'department' => $user['department'],
+                        'cohorte_id' => $user['cohorte_id'],
                         'telephone'  => $user['telephone'] ?? '',
                         'photo'      => $user['photo']     ?? '',
                     ];
@@ -141,16 +142,26 @@ class AuthController
 
         // LEFT JOIN users pour récupérer nom/email/role de QUI a fait l'action
         // COALESCE gère les user_id NULL (connexions anonymes ou sessions expirées)
-        $sql = "
-            SELECT
-                a.*,
-                COALESCE(u.nom,  'Inconnu') AS nom,
-                COALESCE(u.email,'')        AS email,
-                COALESCE(u.role, '')        AS role
-            FROM audit_logs a
-            LEFT JOIN users u ON u.id = a.user_id
-            WHERE 1=1
-        ";
+     $sql = "
+SELECT
+    a.*,
+
+    COALESCE(u.nom,'Inconnu') AS nom,
+    COALESCE(u.email,'') AS email,
+    COALESCE(u.role,'') AS role,
+
+    COALESCE(e.nom,'') AS entity_nom
+
+FROM audit_logs a
+
+LEFT JOIN users u 
+    ON u.id = a.user_id
+
+LEFT JOIN users e
+    ON e.id = a.entity_id
+
+WHERE 1=1
+";
         $params = [];
 
         if (!empty($search)) {
@@ -440,7 +451,7 @@ class AuthController
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonProfil(false, 'Methode non autorisee');
-            return;
+            return; 
         }
 
         $userId   = $_SESSION['user']['id']   ?? '';

@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "httpEndpoint": {
+      "path": "/health",
+      "expectedStatus": 200
+    },
+    "memory": {
+      "threshold": "500M"
+    },
+    "cpu": {
+      "threshold": "80%"
+    }
+  },
+  "deployment": {
+    "timeout": 300,
+    "maxInstances": 3,
+    "minInstances": 1
+  }
+}

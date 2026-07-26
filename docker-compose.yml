@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pointagepro_app
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-root}
+      - DB_PASS=${DB_PASS:-password}
+      - DB_NAME=${DB_NAME:-pointagepro}
+      - APP_ENV=development
+      - APP_DEBUG=true
+    volumes:
+      - .:/app
+      - ./storage:/app/storage
+    depends_on:
+      - db
+    networks:
+      - pointagepro_network
+    command: frankenphp php-server --root /app/public --addr 0.0.0.0:8000
+
+  db:
+    image: mysql:8.0
+    container_name: pointagepro_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-password}
+      MYSQL_DATABASE: ${DB_NAME:-pointagepro}
+      MYSQL_USER: ${DB_USER:-pointage}
+      MYSQL_PASSWORD: ${DB_PASS:-password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - pointagepro_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: pointagepro_phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER:-root}
+      PMA_PASSWORD: ${DB_PASS:-password}
+      PMA_DB: ${DB_NAME:-pointagepro}
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - pointagepro_network
+
+volumes:
+  db_data:
+
+networks:
+  pointagepro_network:
+    driver: bridge

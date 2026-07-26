@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../config/Database.php';
 require_once __DIR__ . '/../models/Attendance.php';
 require_once __DIR__ . '/../models/QrCode.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/EmploiDuTemps.php';
 
 class AttendanceController
 {
@@ -11,6 +12,7 @@ class AttendanceController
     private Attendance $attendanceModel;
     private QrCode $qrCodeModel;
     private User $userModel;
+    private EmploiDuTemps $emploiModel;
 
     public function __construct()
     {
@@ -19,27 +21,20 @@ class AttendanceController
         $this->attendanceModel = new Attendance();
         $this->qrCodeModel     = new QrCode();
         $this->userModel       = new User();
+        $this->emploiModel     = new EmploiDuTemps();
     }
 
-    // ============================================
-    // LISTE DES PRESENCES (AJAX)
-    // ============================================
     public function liste(): void
     {
         $date   = $_GET['date']   ?? date('Y-m-d');
         $dept   = $_GET['dept']   ?? '';
         $statut = $_GET['statut'] ?? '';
-
         $presences = $this->attendanceModel->presencesParDate($date, $dept ?: null, $statut ?: null);
-
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'data' => $presences]);
         exit;
     }
 
-    // ============================================
-    // LISTE DES PRESENCES (vue)
-    // ============================================
     public function index(): void
     {
         $date      = $_GET['date'] ?? date('Y-m-d');
@@ -48,7 +43,7 @@ class AttendanceController
     }
 
     // ============================================
-    // POINTAGE AUTOMATIQUE (Arrivée OU Départ)
+    // POINTAGE AUTOMATIQUE — avec vérification emploi du temps
     // ============================================
     public function pointerAuto(): void
     {
@@ -57,13 +52,19 @@ class AttendanceController
             exit;
         }
 
-        $token     = trim($_POST['token'] ?? '');
-        $latitude  = 14.679620;
-        $longitude = -17.441229;
+        $token = trim($_POST['token'] ?? '');
+
+        // 🔄 RÉCUPÉRATION DYNAMIQUE DE LA CONFIGURATION GPS
+        $stmtConfig = $this->db->prepare("SELECT latitude, longitude FROM school_qr LIMIT 1");
+        $stmtConfig->execute();
+        $config = $stmtConfig->fetch(PDO::FETCH_ASSOC);
+
+        $latitude  = $config && !empty($config['latitude'])  ? (float)$config['latitude']  : 14.721360;
+        $longitude = $config && !empty($config['longitude']) ? (float)$config['longitude'] : -17.463802;
+
         $adresse   = 'Etablissement scolaire — Dakar';
-        $today       = date('Y-m-d');
-        $heure       = date('H:i:s');
-        $heureLimite = '08:30:00';
+        $today     = date('Y-m-d');
+        $heure     = date('H:i:s');
 
         $etudiant = $this->trouverEtudiantParToken($token);
         if (!$etudiant) {
@@ -71,15 +72,24 @@ class AttendanceController
             return;
         }
 
+        // ✅ VÉRIFICATION EMPLOI DU TEMPS
+        $dept         = $etudiant['department'] ?? '';
+        $verification = $this->emploiModel->verifierPointage($dept);
+
+        if ($verification['statut'] !== 'ok') {
+            $this->jsonResponse(false, $verification['message'], [
+                'statut'  => $verification['statut'],
+                'creneau' => $verification['creneau'],
+            ]);
+            return;
+        }
+
         $pointageOuvert = $this->attendanceModel->pointageOuvert($etudiant['id'], $today);
 
-        // Cas 1 : déjà arrivé, pas encore parti → départ
+        // Cas 1 : déjà arrivé → départ
         if ($pointageOuvert) {
             $this->attendanceModel->marquerDepart($etudiant['id'], $today, $heure);
-
-            // ✅ LOG avec l'ID de l'ÉTUDIANT (pas l'admin qui scanne)
             $this->logAction('checkout', $etudiant['nom'] ?? $etudiant['email'], $etudiant['id']);
-
             $this->jsonResponse(true, 'Depart enregistre avec succes.', [
                 'etudiant' => $etudiant['nom'] ?? $etudiant['email'],
                 'heure'    => $heure,
@@ -89,20 +99,22 @@ class AttendanceController
             return;
         }
 
-        // Cas 2 : déjà arrivé ET parti → rien
+        // Cas 2 : déjà complet
         if ($this->attendanceModel->existePourDate($etudiant['id'], $today)) {
             $this->jsonResponse(false, 'Cet etudiant a deja pointe arrivee et depart aujourd\'hui.');
             return;
         }
 
-        // Cas 3 : pas encore pointé → arrivée
-        $type = ($heure > $heureLimite) ? 'retard' : 'present';
+        // Cas 3 : arrivée — type selon emploi du temps
+        $type = 'present';
+if (!empty($verification['creneau']['heure_debut'])) {
+    $type = ($heure > $verification['creneau']['heure_debut']) ? 'retard' : 'present';
+}
+
         $this->attendanceModel->creerArrivee(
             $etudiant['id'], $type, $today, $heure,
             $latitude, $longitude, $adresse, 'valide'
         );
-
-        // ✅ LOG avec l'ID de l'ÉTUDIANT
         $this->logAction('checkin', $etudiant['nom'] ?? $etudiant['email'], $etudiant['id']);
 
         $this->jsonResponse(true, 'Arrivee enregistree avec succes.', [
@@ -116,7 +128,7 @@ class AttendanceController
     }
 
     // ============================================
-    // CHECK-IN (Arrivée)
+    // CHECK-IN (Arrivée) — avec vérification emploi du temps
     // ============================================
     public function checkin(): void
     {
@@ -125,17 +137,35 @@ class AttendanceController
             exit;
         }
 
-        $token     = trim($_POST['token'] ?? '');
-        $latitude  = 14.679620;
-        $longitude = -17.441229;
+        $token = trim($_POST['token'] ?? '');
+
+        // 🔄 RÉCUPÉRATION DYNAMIQUE DE LA CONFIGURATION GPS
+        $stmtConfig = $this->db->prepare("SELECT latitude, longitude FROM school_qr LIMIT 1");
+        $stmtConfig->execute();
+        $config = $stmtConfig->fetch(PDO::FETCH_ASSOC);
+
+        $latitude  = $config && !empty($config['latitude'])  ? (float)$config['latitude']  : 14.721360;
+        $longitude = $config && !empty($config['longitude']) ? (float)$config['longitude'] : -17.463802;
+
         $adresse   = 'Etablissement scolaire — Dakar';
-        $today       = date('Y-m-d');
-        $heure       = date('H:i:s');
-        $heureLimite = '08:30:00';
+        $today     = date('Y-m-d');
+        $heure     = date('H:i:s');
 
         $etudiant = $this->trouverEtudiantParToken($token);
         if (!$etudiant) {
             $this->jsonResponse(false, 'QR Code invalide ou etudiant inactif.');
+            return;
+        }
+
+        // ✅ VÉRIFICATION EMPLOI DU TEMPS
+       // ✅ VÉRIFICATION EMPLOI DU TEMPS
+$cohorteId    = $etudiant['cohorte_id'] ?? 0;
+$verification = $this->emploiModel->verifierPointage((int) $cohorteId);
+        if ($verification['statut'] !== 'ok') {
+            $this->jsonResponse(false, $verification['message'], [
+                'statut'  => $verification['statut'],
+                'creneau' => $verification['creneau'],
+            ]);
             return;
         }
 
@@ -144,13 +174,10 @@ class AttendanceController
             return;
         }
 
-        $type = ($heure > $heureLimite) ? 'retard' : 'present';
-        $this->attendanceModel->creerArrivee(
-            $etudiant['id'], $type, $today, $heure,
-            $latitude, $longitude, $adresse, 'valide'
-        );
-
-        // ✅ LOG avec l'ID de l'ÉTUDIANT
+      $type = 'present';
+if (!empty($verification['creneau']['heure_debut'])) {
+    $type = ($heure > $verification['creneau']['heure_debut']) ? 'retard' : 'present';
+}
         $this->logAction('checkin', $etudiant['nom'] ?? $etudiant['email'], $etudiant['id']);
 
         $this->jsonResponse(true, 'Arrivee enregistree avec succes.', [
@@ -189,8 +216,6 @@ class AttendanceController
         }
 
         $this->attendanceModel->marquerDepart($etudiant['id'], $today, $heure);
-
-        // ✅ LOG avec l'ID de l'ÉTUDIANT
         $this->logAction('checkout', $etudiant['nom'] ?? $etudiant['email'], $etudiant['id']);
 
         $this->jsonResponse(true, 'Depart enregistre avec succes.', [
@@ -200,31 +225,19 @@ class AttendanceController
         ]);
     }
 
-    // ============================================
-    // SCANNER QR CODE (vue)
-    // ============================================
     public function scanner(): void
     {
         require_once __DIR__ . '/../Views/attendance/scanner.php';
     }
 
-    // ============================================
-    // GÉNÉRER QR CODE
-    // ============================================
     public function genererQR(): void
     {
         $userId = $_GET['user_id'] ?? '';
-        if (empty($userId)) {
-            header('Location: index.php?route=presences');
-            exit;
-        }
+        if (empty($userId)) { header('Location: index.php?route=presences'); exit; }
         $token = $this->qrCodeModel->genererSiAbsent($userId, 4);
         $this->jsonResponse(true, 'QR Code genere.', ['token' => $token]);
     }
 
-    // ============================================
-    // HELPER — retrouve un étudiant actif via token QR
-    // ============================================
     private function trouverEtudiantParToken(string $token): ?array
     {
         $qr = $this->qrCodeModel->trouverTokenValide($token);
@@ -232,9 +245,6 @@ class AttendanceController
         return $this->userModel->findById($qr['user_id']);
     }
 
-    // ============================================
-    // HELPERS
-    // ============================================
     private function jsonResponse(bool $success, string $message, array $data = []): void
     {
         header('Content-Type: application/json');
@@ -242,30 +252,27 @@ class AttendanceController
         exit;
     }
 
-    // ✅ CORRECTION CLÉE :
-    // entity     = nom de l'étudiant (affiché dans l'audit)
-    // entityId   = UUID de l'étudiant (pour le JOIN dans auditListe)
-    // forceUserId = UUID de l'étudiant (user_id dans audit_logs)
-    //
-    // Avant : user_id = admin connecté → audit ne montrait que l'admin
-    // Après : user_id = étudiant concerné → audit montre l'étudiant
-    private function logAction(
-        string $action,
-        string $entity     = '',
-        string $forceUserId = ''
-    ): void {
+    private function logAction(string $action, string $entity = '', string $forceUserId = ''): void
+    {
         try {
-            // Pour checkin/checkout : on logue l'étudiant, pas l'admin qui scanne
-            $userId = !empty($forceUserId)
-                ? $forceUserId
-                : ($_SESSION['user']['id'] ?? null);
-
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-            $stmt = $this->db->prepare(
-                "INSERT INTO audit_logs (user_id, action, entity, entity_id, ip)
-                 VALUES (?, ?, ?, ?, ?)"
+            $userId = !empty($forceUserId) ? $forceUserId : ($_SESSION['user']['id'] ?? null);
+            $ip     = $this->getIp();
+            $stmt   = $this->db->prepare(
+                "INSERT INTO audit_logs (user_id, action, entity, entity_id, ip) VALUES (?, ?, ?, ?, ?)"
             );
             $stmt->execute([$userId, $action, $entity, null, $ip]);
         } catch (\Exception $e) {}
+    }
+
+    private function getIp(): string
+    {
+        foreach (['HTTP_CF_CONNECTING_IP','HTTP_X_REAL_IP','HTTP_X_FORWARDED_FOR'] as $h) {
+            if (!empty($_SERVER[$h])) {
+                $ip = trim(explode(',', $_SERVER[$h])[0]);
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return $ip;
+            }
+        }
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        return ($ip === '::1' || $ip === '127.0.0.1') ? '127.0.0.1 (local)' : $ip;
     }
 }
