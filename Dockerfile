@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     zip \
-    mysql-client \
+    mariadb-client-compat \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
@@ -36,7 +36,6 @@ RUN composer dump-autoload --optimize
 RUN mkdir -p storage/logs storage/exports storage/qrcodes public/uploads/photos public/uploads/justificatifs && \
     chmod -R 755 storage public
 
-EXPOSE 8000
+EXPOSE 80
 
-# Pour Railway, le port est défini via la variable d'environnement $PORT
-CMD sh -c "php -S 0.0.0.0:${PORT:-8000} -t public"
+CMD ["frankenphp", "php-server", "--root", "/app/public"]
