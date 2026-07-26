@@ -5,7 +5,41 @@ require_once __DIR__ . '/../config/env.php';
 
 require_once __DIR__ . '/../config/Database.php';
 
+$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => $_SERVER['HTTP_HOST'] ?? '',
+    'secure' => $secure,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
+ini_set('session.use_strict_mode', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_secure', $secure ? '1' : '0');
+
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: geolocation=(self)');
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';");
+
 session_start();
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > 30 * 60) {
+    session_unset();
+    session_destroy();
+    session_start();
+}
+$_SESSION['last_activity'] = time();
 
 $route = $_GET['route'] ?? 'login';
 $route = preg_replace('/[^a-zA-Z0-9_\-\/]/', '', $route);
@@ -196,6 +230,11 @@ switch ($route) {
     case 'rapport/presences/excel':
         require_once __DIR__ . '/../app/Controllers/ReportController.php';
         (new ReportController())->fichePresenceExcel();
+        break;
+
+    case 'rapport/presences/pdf':
+        require_once __DIR__ . '/../app/Controllers/ReportController.php';
+        (new ReportController())->rapportPresencesPdf();
         break;
 
     case 'rapport/conges/pdf':

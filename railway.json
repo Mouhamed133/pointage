@@ -10,6 +10,6 @@
     }
   },
   "deploy": {
-    "startCommand": "frankenphp php-server --root /app/public --addr 0.0.0.0:$PORT"
+    "startCommand": "php -S 0.0.0.0:$PORT -t public"
   }
 }

@@ -114,6 +114,28 @@ class SchoolQrController
                 exit;
             }
 
+            $latitude = isset($_POST['lat']) ? floatval($_POST['lat']) : null;
+            $longitude = isset($_POST['lng']) ? floatval($_POST['lng']) : null;
+
+            if ($latitude === null || $longitude === null) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Position introuvable. Autorisez la geolocalisation.']);
+                exit;
+            }
+
+            $distance = $this->calculerDistance(
+                $latitude,
+                $longitude,
+                (float) $schoolQr['latitude'],
+                (float) $schoolQr['longitude']
+            );
+
+            if ($distance > intval($schoolQr['rayon'] ?? 500)) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Hors du perimetre autorise de l\'ecole. Pointage refuse.']);
+                exit;
+            }
+
             $userId = $_SESSION['user']['id'];
             $qrEtu  = $this->qrCodeModel->parUtilisateur($userId);
 
@@ -124,6 +146,8 @@ class SchoolQrController
             }
 
             $_POST['token'] = $qrEtu['token'];
+            $_POST['latitude'] = $latitude;
+            $_POST['longitude'] = $longitude;
         } else {
             $qrEtu = $this->qrCodeModel->trouverTokenValide($tokenScanne);
             if (!$qrEtu) {
@@ -136,6 +160,17 @@ class SchoolQrController
 
         $attendance = new AttendanceController();
         $attendance->pointerAuto();
+    }
+
+    private function calculerDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $rad = pi() / 180;
+        $dLat = ($lat2 - $lat1) * $rad;
+        $dLng = ($lng2 - $lng1) * $rad;
+        $a = sin($dLat / 2) ** 2 + cos($lat1 * $rad) * cos($lat2 * $rad) * sin($dLng / 2) ** 2;
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        $earthRadius = 6371000;
+        return $earthRadius * $c;
     }
 
     // ============================================
@@ -234,9 +269,11 @@ class SchoolQrController
         unset($_SESSION['scan_pending_token']);
 
         require_once __DIR__ . '/../models/Attendance.php';
+        require_once __DIR__ . '/../models/EmploiDuTemps.php';
 
         $userId          = $_SESSION['user']['id'];
         $nomEtudiant     = $_SESSION['user']['nom'] ?? '';
+        $cohorteId       = intval($_SESSION['user']['cohorte_id'] ?? 0);
         $qrEtu           = $this->qrCodeModel->parUtilisateur($userId);
 
         if (!$qrEtu) {
@@ -265,12 +302,31 @@ class SchoolQrController
             return;
         }
 
+        // Bloquer le pointage école si ce n'est pas le jour de l'emploi du temps
+        $emploiModel = new EmploiDuTemps();
+        $verification = $emploiModel->verifierPointage($cohorteId);
+        if ($verification['statut'] !== 'ok') {
+            $message = $verification['message'];
+            if ($verification['statut'] === 'pas_de_cours') {
+                $message = 'Pointage impossible : aucun cours prevu aujourd\'hui.';
+            } elseif ($verification['statut'] === 'hors_creneau') {
+                $message = 'Pointage impossible : hors de la plage horaire autorisee.';
+            }
+            $this->redirigerDashboard($message, 'erreur');
+            return;
+        }
+
         // Cas 3 : arrivée
         $type = ($heure > $heureLimite) ? 'retard' : 'present';
         $attendanceModel->creerArrivee(
-            $userId, $type, $today, $heure,
-            14.679620, -17.441229,
-            'Etablissement scolaire — Dakar', 'valide'
+            $userId,
+            $type,
+            $today,
+            $heure,
+            14.679620,
+            -17.441229,
+            'Etablissement scolaire — Dakar',
+            'valide'
         );
         // ✅ user_id = étudiant lui-même
         $this->logAction('checkin', $nomEtudiant, $userId);
@@ -316,6 +372,7 @@ class SchoolQrController
                  VALUES (?, ?, ?, ?, ?)"
             );
             $stmt->execute([$userId, $action, $entity, null, $ip]);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
     }
 }

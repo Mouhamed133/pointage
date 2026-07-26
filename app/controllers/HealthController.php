@@ -8,8 +8,11 @@
 header('Content-Type: application/json');
 
 $health = [
+    'success' => true,
     'status' => 'ok',
     'timestamp' => date('Y-m-d H:i:s'),
+    'timestamp_iso' => date('c'),
+    'timezone' => date_default_timezone_get(),
     'environment' => $_ENV['APP_ENV'] ?? 'production',
 ];
 

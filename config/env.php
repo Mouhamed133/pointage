@@ -43,3 +43,13 @@ foreach ($required as $var) {
 if (!empty($missing)) {
     error_log("Variables d'environnement manquantes: " . implode(', ', $missing));
 }
+
+// Définir un fuseau horaire serveur par défaut pour éviter les décalages d'heure
+$timezone = $_ENV['APP_TIMEZONE'] ?? $_SERVER['APP_TIMEZONE'] ?? 'Africa/Dakar';
+if (!empty($timezone)) {
+    date_default_timezone_set($timezone);
+}
+
+
+
+mysql://root:asJdpmzxOFjZiyxzTYtNawFtsjijuBGk@sakura.proxy.rlwy.net:59721/railway

@@ -17,7 +17,7 @@ L'application utilise des CRON jobs pour les tâches programmées:
   "services": {
     "app": {
       "build": { "dockerfile": "Dockerfile" },
-      "start": "frankenphp php-server --root /app/public --addr 0.0.0.0:$PORT"
+      "start": "php -S 0.0.0.0:$PORT -t public"
     },
     "cron": {
       "build": { "dockerfile": "Dockerfile" },

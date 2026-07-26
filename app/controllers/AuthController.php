@@ -49,6 +49,7 @@ class AuthController
                 } elseif (!password_verify($password, $user['password_hash'])) {
                     $erreur = 'Email ou mot de passe incorrect.';
                 } else {
+                    session_regenerate_id(true);
                     $_SESSION['user'] = [
                         'id'         => $user['id'],
                         'nom'        => $user['nom'],
@@ -59,6 +60,7 @@ class AuthController
                         'telephone'  => $user['telephone'] ?? '',
                         'photo'      => $user['photo']     ?? '',
                     ];
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     $_SESSION['last_activity'] = time();
 
                     // Log avec l'ID explicite (évite user_id NULL dans audit_logs)
@@ -92,6 +94,13 @@ class AuthController
     {
         $userId = $_SESSION['user']['id'] ?? '';
         $this->logAction('logout', 'users', '', $userId);
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        }
+
+        session_unset();
         session_destroy();
         header('Location: index.php?route=login');
         exit;
@@ -142,7 +151,7 @@ class AuthController
 
         // LEFT JOIN users pour récupérer nom/email/role de QUI a fait l'action
         // COALESCE gère les user_id NULL (connexions anonymes ou sessions expirées)
-     $sql = "
+        $sql = "
 SELECT
     a.*,
 
@@ -451,7 +460,7 @@ WHERE 1=1
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonProfil(false, 'Methode non autorisee');
-            return; 
+            return;
         }
 
         $userId   = $_SESSION['user']['id']   ?? '';
@@ -556,6 +565,7 @@ WHERE 1=1
                 VALUES (?, ?, ?, ?, ?)
             ");
             $stmt->execute([$userId, $action, $entity, $entityId ?: null, $ip]);
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
     }
 }

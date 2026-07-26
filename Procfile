@@ -1,1 +1,1 @@
-web: frankenphp php-server --root /app/public --addr 0.0.0.0:$PORT
+web: php -S 0.0.0.0:$PORT -t public

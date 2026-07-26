@@ -39,4 +39,4 @@ RUN mkdir -p storage/logs storage/exports storage/qrcodes public/uploads/photos 
 EXPOSE 8000
 
 # Pour Railway, le port est défini via la variable d'environnement $PORT
-CMD sh -c "frankenphp php-server --root /app/public --addr 0.0.0.0:${PORT:-8000}"
+CMD sh -c "php -S 0.0.0.0:${PORT:-8000} -t public"
